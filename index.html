@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minecraft Server Orchestrator</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body data-theme="dark">
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-pill">MC</div>
+      <div>
+        <div class="project-name" data-i18n="app.name">MC Orchestrator</div>
+        <div class="project-subtitle" data-i18n="app.subtitle">Multi-platform server control</div>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <div class="nav-section-title" data-i18n="nav.section.main">Main</div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link active" data-view-target="dashboard">
+            <span class="nav-link-icon">⚡</span>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="servers">
+            <span class="nav-link-icon">🖥</span>
+            <span data-i18n="nav.servers">Servers</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="configs">
+            <span class="nav-link-icon">📝</span>
+            <span data-i18n="nav.configs">Configs</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="infrastructure">
+            <span class="nav-link-icon">⚙</span>
+            <span data-i18n="nav.infrastructure">Infrastructure</span>
+          </button>
+        </li>
+      </ul>
+      <div class="nav-section-title" data-i18n="nav.section.tools">Tools</div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="metrics">
+            <span class="nav-link-icon">📊</span>
+            <span data-i18n="nav.metrics">Metrics</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="logs">
+            <span class="nav-link-icon">📜</span>
+            <span data-i18n="nav.logs">Logs</span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-badge">
+        <span class="sidebar-badge-dot"></span>
+        <span data-i18n="sidebar.clusterHealthy">Cluster healthy</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-panel">
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" data-i18n="topbar.title">Minecraft Server Control</div>
+        <div class="topbar-subtitle" data-i18n="topbar.subtitle">Deploy, monitor and configure servers in minutes</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="chip" data-i18n="topbar.plan">Student diploma edition</div>
+        <div class="toggle-group">
+          <div class="lang-toggle">
+            <button class="lang-btn active" data-lang-select="en">EN</button>
+            <button class="lang-btn" data-lang-select="ru">RU</button>
+          </div>
+          <button class="theme-switch" id="themeSwitch" type="button">
+            <div class="theme-thumb"></div>
+            <div class="theme-icons"><span>☾</span><span>☼</span></div>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section class="content">
+
+      <!-- DASHBOARD -->
+      <section class="view active" data-view="dashboard">
+        <div class="card-grid">
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title" data-i18n="dash.totalServers">Total servers</div>
+              <span class="badge-pill" data-i18n="dash.autoDeploy">Auto deploy enabled</span>
+            </div>
+            <div class="card-kpi" id="kpi-total">—</div>
+            <div class="card-kpi-sub" data-i18n="dash.totalServersHint">Across Ubuntu & Debian nodes</div>
+            <div class="card-footer" data-i18n="dash.totalServersFooter">Tip: new servers inherit default JVM & backup policy</div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title" data-i18n="dash.onlinePlayers">Online players</div>
+            </div>
+            <div class="card-kpi" id="kpi-online">—</div>
+            <div class="card-kpi-sub">online</div>
+            <div class="card-footer" data-i18n="dash.onlinePlayersFooter">Peak load around 20:00 server time</div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title" data-i18n="dash.cpuLoad">Average CPU load</div>
+            </div>
+            <div class="card-kpi" id="kpi-cpu">—</div>
+            <div class="card-kpi-sub" data-i18n="dash.cpuLoadSub">Across all JVM containers</div>
+            <div class="card-footer" data-i18n="dash.cpuLoadFooter">Consider scaling nodes when >75% for 15 min</div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div class="card-title" data-i18n="dash.diskUsage">Disk usage</div>
+            </div>
+            <div class="card-kpi" id="kpi-disk">—</div>
+            <div class="card-kpi-sub">of 2 TB</div>
+            <div class="card-footer" data-i18n="dash.diskUsageFooter">Worlds & modpacks stored in object storage</div>
+          </article>
+        </div>
+      </section>
+
+      <!-- SERVERS -->
+      <section class="view" data-view="servers">
+        <div class="card table-card">
+          <div class="card-header">
+            <div class="card-title" data-i18n="servers.title">Servers</div>
+            <button class="badge-pill" id="btn-new-server" data-i18n="servers.newServer">+ New server</button>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="table.server">Server</th>
+                <th data-i18n="table.version">Version</th>
+                <th data-i18n="table.node">Node</th>
+                <th data-i18n="table.status">Status</th>
+                <th data-i18n="table.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="servers-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CONFIGS -->
+      <section class="view" data-view="configs">
+        <div class="card">
+          <div class="card-header"><div class="card-title" data-i18n="configs.title">Configuration editor</div></div>
+          <div class="card-footer" data-i18n="configs.hint">Attach your YAML/properties editor here</div>
+        </div>
+      </section>
+
+      <!-- INFRASTRUCTURE -->
+      <section class="view" data-view="infrastructure">
+        <div class="card">
+          <div class="card-header"><div class="card-title" data-i18n="infra.title">Infrastructure presets</div></div>
+          <div class="card-footer" data-i18n="infra.hint">Manage CPU cores, RAM, disk quotas, default JVM flags</div>
+        </div>
+      </section>
+
+      <!-- METRICS -->
+      <section class="view" data-view="metrics">
+        <div class="card">
+          <div class="card-header"><div class="card-title" data-i18n="metrics.title">Metrics dashboard</div></div>
+          <div class="card-footer" data-i18n="metrics.hint">Insert charts for CPU, RAM, disk, online players</div>
+        </div>
+      </section>
+
+      <!-- LOGS -->
+      <section class="view" data-view="logs">
+        <div class="card">
+          <div class="card-header"><div class="card-title" data-i18n="logs.title">Logs & events</div></div>
+          <div class="card-footer" data-i18n="logs.hint">Console output, deployment logs, alerts</div>
+        </div>
+      </section>
+
+    </section>
+  </main>
+</div>
+
+<!-- CREATE SERVER MODAL -->
+<div class="modal-overlay" id="server-modal-overlay">
+  <div class="modal modal--wide">
+    <div class="modal-title" data-i18n="modal.createServer">Create server</div>
+    <form id="modal-form" onsubmit="return false">
+
+      <div class="form-group">
+        <label data-i18n="modal.serverName">Server name</label>
+        <input id="f-name" type="text" placeholder="Survival-RU-1" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="modal.version">Minecraft version</label>
+          <select id="f-version">
+            <option value="1.20.4">1.20.4</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.18.2">1.18.2</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="modal.modLoader">Mod loader</label>
+          <select id="f-modloader">
+            <option value="Paper">Paper</option>
+            <option value="Spigot">Spigot</option>
+            <option value="Forge">Forge</option>
+            <option value="Fabric">Fabric</option>
+            <option value="NeoForge">NeoForge</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="modal.modLoaderVersion">Mod loader version</label>
+        <input id="f-modloader-version" type="text" placeholder="e.g. 47.3.0" />
+      </div>
+
+      <!-- Modpack ZIP -->
+      <div class="form-group">
+        <label data-i18n="modal.modpack">Modpack (ZIP)</label>
+        <div class="dropzone" id="f-dropzone">
+          <span class="dropzone-icon">📦</span>
+          <span class="dropzone-text" data-i18n="modal.dropzoneHint">Drag & drop .zip modpack here</span>
+          <span class="dropzone-filename" id="dropzone-filename"></span>
+          <input type="file" id="f-modpack-file" accept=".zip" style="display:none" />
+        </div>
+      </div>
+
+      <!-- Mod Loader JAR -->
+      <div class="form-group">
+        <label data-i18n="modal.modLoaderJar">Mod loader JAR (optional)</label>
+        <div class="dropzone" id="f-dropzone-jar">
+          <span class="dropzone-icon">☕</span>
+          <span class="dropzone-text" data-i18n="modal.dropzoneJarHint">Drag & drop .jar mod loader here</span>
+          <span class="dropzone-filename" id="dropzone-jar-filename"></span>
+          <input type="file" id="f-modloader-file" accept=".jar" style="display:none" />
+        </div>
+      </div>
+
+      <!-- Deploy target -->
+      <div class="form-group">
+        <label data-i18n="modal.deployTarget">Deploy target</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="deploy-target" id="f-target-server" value="server" checked />
+            <span data-i18n="modal.targetServer">Server (bare metal)</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="deploy-target" id="f-target-docker" value="docker" />
+            <span data-i18n="modal.targetDocker">Docker container</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- SERVER FIELDS -->
+      <div id="fields-server" class="deploy-fields">
+        <div class="form-section-title" data-i18n="modal.serverResources">Server resources</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.ram">RAM (MB)</label>
+            <input id="f-ram" type="number" value="2048" min="512" step="512" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.cpu">CPU cores</label>
+            <input id="f-cpu" type="number" value="2" min="1" max="32" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.disk">Disk (GB)</label>
+            <input id="f-disk" type="number" value="20" min="5" step="5" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.port">Server port</label>
+            <input id="f-port" type="number" value="25565" min="1024" max="65535" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="modal.jvmFlags">JVM flags (optional)</label>
+          <input id="f-jvm" type="text" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" />
+        </div>
+
+        <!-- Convenience options: Server -->
+        <div class="form-section-title" data-i18n="modal.convenience">Convenience</div>
+        <div class="toggle-checks">
+          <label class="check-option">
+            <input type="checkbox" id="f-max-resources" />
+            <span data-i18n="modal.maxResources">Allocate all available resources</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-auto-restart" checked />
+            <span data-i18n="modal.autoRestart">Auto-restart on crash</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-auto-backup" checked />
+            <span data-i18n="modal.autoBackup">Scheduled backups</span>
+          </label>
+          <div class="form-subrow" id="f-backup-interval-wrap">
+            <label data-i18n="modal.backupInterval">Backup every (hours)</label>
+            <input id="f-backup-interval" type="number" value="6" min="1" max="168" />
+          </div>
+          <label class="check-option">
+            <input type="checkbox" id="f-backup-cleanup" checked />
+            <span data-i18n="modal.backupCleanup">Auto-delete backups older than</span>
+          </label>
+          <div class="form-subrow" id="f-backup-ttl-wrap">
+            <label data-i18n="modal.backupTtl">Keep backups for (days)</label>
+            <input id="f-backup-ttl" type="number" value="7" min="1" max="365" />
+          </div>
+          <label class="check-option">
+            <input type="checkbox" id="f-whitelist" />
+            <span data-i18n="modal.whitelist">Enable whitelist</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-rcon" />
+            <span data-i18n="modal.rcon">Enable RCON (remote console)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- DOCKER FIELDS -->
+      <div id="fields-docker" class="deploy-fields" style="display:none">
+        <div class="form-section-title" data-i18n="modal.dockerResources">Docker resources</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.ram">Memory limit (MB)</label>
+            <input id="f-docker-ram" type="number" value="2048" min="512" step="512" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.cpu">CPU limit (cores)</label>
+            <input id="f-docker-cpu" type="number" value="2" min="1" max="32" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.disk">Volume size (GB)</label>
+            <input id="f-docker-disk" type="number" value="20" min="5" step="5" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.port">Exposed port</label>
+            <input id="f-docker-port" type="number" value="25565" min="1024" max="65535" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.dockerImage">Base image</label>
+            <select id="f-docker-image">
+              <option value="eclipse-temurin:17">eclipse-temurin:17 (Java 17)</option>
+              <option value="eclipse-temurin:21">eclipse-temurin:21 (Java 21)</option>
+              <option value="amazoncorretto:17">amazoncorretto:17</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.restartPolicy">Restart policy</label>
+            <select id="f-restart-policy">
+              <option value="unless-stopped">unless-stopped</option>
+              <option value="always">always</option>
+              <option value="on-failure">on-failure</option>
+              <option value="no">no</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.networkMode">Network mode</label>
+            <select id="f-network-mode">
+              <option value="bridge">bridge (default)</option>
+              <option value="host">host</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.dockerMemSwap">Memory swap (MB)</label>
+            <input id="f-docker-swap" type="number" value="512" min="0" step="256" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="modal.jvmFlags">JVM flags (optional)</label>
+          <input id="f-docker-jvm" type="text" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" />
+        </div>
+
+        <!-- Convenience options: Docker -->
+        <div class="form-section-title" data-i18n="modal.convenience">Convenience</div>
+        <div class="toggle-checks">
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-max-resources" />
+            <span data-i18n="modal.maxResources">Allocate all available resources</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-auto-backup" checked />
+            <span data-i18n="modal.autoBackup">Scheduled backups (volume snapshot)</span>
+          </label>
+          <div class="form-subrow" id="f-docker-backup-interval-wrap">
+            <label data-i18n="modal.backupInterval">Backup every (hours)</label>
+            <input id="f-docker-backup-interval" type="number" value="6" min="1" max="168" />
+          </div>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-backup-cleanup" checked />
+            <span data-i18n="modal.backupCleanup">Auto-delete backups older than</span>
+          </label>
+          <div class="form-subrow" id="f-docker-backup-ttl-wrap">
+            <label data-i18n="modal.backupTtl">Keep backups for (days)</label>
+            <input id="f-docker-backup-ttl" type="number" value="7" min="1" max="365" />
+          </div>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-healthcheck" checked />
+            <span data-i18n="modal.healthcheck">Enable Docker healthcheck</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-readonly-fs" />
+            <span data-i18n="modal.readonlyFs">Read-only filesystem (except volumes)</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-log-limit" checked />
+            <span data-i18n="modal.logLimit">Limit container log size (100 MB)</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-docker-rcon" />
+            <span data-i18n="modal.rcon">Enable RCON (remote console)</span>
+          </label>
+        </div>
+      </div>
+
+    </form>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn-create" id="modal-create" data-i18n="modal.create">Create</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/toast.js"></script>
+<script src="assets/js/repository.js"></script>
+<script src="assets/js/server-controller.js"></script>
+<script src="assets/js/view-model.js"></script>
+<script src="assets/js/dashboard-view.js"></script>
+<script src="assets/js/servers-view.js"></script>
+<script src="assets/js/modal-view.js"></script>
+<script src="assets/js/custom-select.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
