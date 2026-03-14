@@ -19,8 +19,17 @@ const App = (() => {
           v.classList.toggle("active", v.dataset.view === btn.dataset.viewTarget)
         );
         if (btn.dataset.viewTarget === "servers")   ServersView.render();
+        if (btn.dataset.viewTarget === "nodes")     NodesView.render();
         if (btn.dataset.viewTarget === "dashboard") DashboardView.render();
       });
+    });
+  }
+
+  function initLogout() {
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      localStorage.removeItem("demo_mode");
+      // Потом будет localStorage.removeItem("token") и POST /api/auth/logout
+      window.location.href = "auth.html";
     });
   }
 
@@ -30,8 +39,11 @@ const App = (() => {
     initViews();
     DashboardView.render();
     ServersView.render();
+    NodesView.render();
+    NodesView.initModal();
     ModalView.init();
     CustomSelect.initAll();
+    initLogout();
   }
 
   return { init };

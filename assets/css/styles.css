@@ -355,7 +355,28 @@ body[data-theme="light"] .form-subrow input {
 }
 .form-subrow input:focus { border-color: var(--accent-green); }
 
-/* ===== Custom scrollbar ===== */
+/* Custom scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,230,118,0.45) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(0,230,118,0.45);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(0,230,118,0.75); }
+
+body[data-theme="light"] * {
+  scrollbar-color: rgba(0,150,80,0.35) transparent;
+}
+body[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(0,150,80,0.35);
+}
+body[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,150,80,0.65);
+}
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(0,230,118,0.45) transparent;
@@ -378,30 +399,7 @@ body[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
   background: rgba(0,150,80,0.65);
 }
 
-/* ===== Custom scrollbar ===== */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0,230,118,0.45) transparent;
-}
-*::-webkit-scrollbar { width: 6px; height: 6px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb {
-  background: rgba(0,230,118,0.45);
-  border-radius: 999px;
-}
-*::-webkit-scrollbar-thumb:hover { background: rgba(0,230,118,0.75); }
-
-body[data-theme="light"] * {
-  scrollbar-color: rgba(0,150,80,0.35) transparent;
-}
-body[data-theme="light"] *::-webkit-scrollbar-thumb {
-  background: rgba(0,150,80,0.35);
-}
-body[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
-  background: rgba(0,150,80,0.65);
-}
-
-/* ===== Custom Select ===== */
+/* Custom Select */
 .csel-wrapper {
   position: relative;
   width: 100%;
@@ -478,3 +476,67 @@ body[data-theme="light"] .csel-option:hover { background: rgba(0,0,0,0.05); }
   color: var(--accent-green);
   background: rgba(0,230,118,0.08);
 }
+
+/* Logout button */
+.sidebar-logout {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; margin-top: 8px;
+  padding: 8px 10px; border-radius: 999px;
+  border: 1px solid rgba(255,80,80,0.25);
+  background: rgba(255,80,80,0.06);
+  color: #ff8a80; font-size: 13px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+.sidebar-logout:hover {
+  background: rgba(255,80,80,0.14);
+  border-color: rgba(255,80,80,0.5);
+  transform: translateY(-1px);
+}
+body[data-theme="light"] .sidebar-logout {
+  color: #cc2200;
+  border-color: rgba(204,34,0,0.2);
+  background: rgba(204,34,0,0.05);
+}
+body[data-theme="light"] .sidebar-logout:hover {
+  background: rgba(204,34,0,0.1);
+  border-color: rgba(204,34,0,0.4);
+}
+.sidebar-logout-icon { font-size: 15px; }
+
+/* Nodes view */
+.status-connecting {
+  background: rgba(255,200,0,0.14);
+  color: #ffe57f;
+}
+code.ip-code {
+  font-family: monospace; font-size: 12px;
+  padding: 2px 6px; border-radius: 4px;
+}
+body[data-theme="dark"]  code.ip-code { background: rgba(255,255,255,0.06); color: #a5ffd0; }
+body[data-theme="light"] code.ip-code { background: rgba(0,0,0,0.05);       color: #007a3d; }
+
+/* IP reveal */
+.ip-masked {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: monospace; font-size: 12px;
+  cursor: pointer;
+  padding: 3px 6px; border-radius: 6px;
+  margin-left: -6px;
+  transition: background 0.15s;
+}
+body[data-theme="dark"]  .ip-masked:hover { background: rgba(255,255,255,0.06); }
+body[data-theme="light"] .ip-masked:hover { background: rgba(0,0,0,0.05); }
+
+.ip-dots { opacity: 0.4; letter-spacing: 2px; }
+.ip-value {
+  padding: 2px 6px; border-radius: 4px;
+}
+body[data-theme="dark"]  .ip-value { background: rgba(255,255,255,0.06); color: #a5ffd0; }
+body[data-theme="light"] .ip-value { background: rgba(0,0,0,0.05); color: #007a3d; }
+.ip-reveal-btn {
+  background: transparent; border: none; cursor: pointer;
+  font-size: 13px; opacity: 0.45; padding: 0; line-height: 1;
+  transition: opacity 0.15s;
+}
+.ip-reveal-btn:hover { opacity: 1; }

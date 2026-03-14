@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MC Orchestrator — Auth</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/auth.css" />
+</head>
+<body data-theme="dark">
+
+  <div class="auth-bg">
+    <div class="auth-glow auth-glow--1"></div>
+    <div class="auth-glow auth-glow--2"></div>
+  </div>
+
+  <div class="auth-shell">
+
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="logo-pill">MC</div>
+      <div>
+        <div class="project-name">MC Orchestrator</div>
+        <div class="project-subtitle">Multi-platform server control</div>
+      </div>
+      <div class="auth-header-actions">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang-select="en">EN</button>
+          <button class="lang-btn" data-lang-select="ru">RU</button>
+        </div>
+        <button class="theme-switch" id="themeSwitch" type="button">
+          <div class="theme-thumb"></div>
+          <div class="theme-icons"><span>☾</span><span>☼</span></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card">
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login" data-i18n="auth.login">Sign in</button>
+        <button class="auth-tab" data-tab="register" data-i18n="auth.register">Register</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div class="auth-form active" id="tab-login">
+        <div class="form-group">
+          <label data-i18n="auth.emailOrPhone">Email or phone</label>
+          <input id="l-identity" type="text" placeholder="user@example.com" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.password">Password</label>
+          <div class="input-eye-wrap">
+            <input id="l-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            <button class="eye-btn" type="button" data-target="l-password" style="opacity:0.45">👁</button>
+          </div>
+        </div>
+        <div class="auth-row">
+          <label class="check-option">
+            <input type="checkbox" id="l-remember" />
+            <span data-i18n="auth.rememberMe">Remember me</span>
+          </label>
+          <button class="auth-link" id="btn-forgot" data-i18n="auth.forgot">Forgot password?</button>
+        </div>
+        <button class="btn-auth" id="btn-login" data-i18n="auth.signIn">Sign in</button>
+        <div class="auth-divider"><span data-i18n="auth.or">or</span></div>
+        <button class="btn-auth btn-auth--outline" id="btn-demo" data-i18n="auth.demo">Continue as demo</button>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-form" id="tab-register">
+        <div class="auth-method-toggle">
+          <button class="method-btn active" data-method="email" data-i18n="auth.byEmail">Email</button>
+          <button class="method-btn" data-method="phone" data-i18n="auth.byPhone">Phone</button>
+        </div>
+
+        <div class="form-group" id="reg-email-group">
+          <label data-i18n="auth.email">Email</label>
+          <input id="r-email" type="email" placeholder="user@example.com" />
+        </div>
+        <div class="form-group" id="reg-phone-group" style="display:none">
+          <label data-i18n="auth.phone">Phone number</label>
+          <div class="phone-wrap">
+            <select id="r-phone-code">
+              <option value="+7">🇷🇺 +7</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+49">🇩🇪 +49</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+380">🇺🇦 +380</option>
+            </select>
+            <input id="r-phone" type="tel" placeholder="999 123 45 67" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label data-i18n="auth.username">Username</label>
+          <input id="r-username" type="text" placeholder="admin" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.password">Password</label>
+          <div class="input-eye-wrap">
+            <input id="r-password" type="password" placeholder="••••••••" />
+            <button class="eye-btn" type="button" data-target="r-password" style="opacity:0.45">👁</button>
+          </div>
+          <div class="password-strength" id="pwd-strength">
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <span class="strength-label" id="strength-label"></span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="auth.confirmPassword">Confirm password</label>
+          <div class="input-eye-wrap">
+            <input id="r-password2" type="password" placeholder="••••••••" />
+            <button class="eye-btn" type="button" data-target="r-password2" style="opacity:0.45">👁</button>
+          </div>
+        </div>
+
+        <button class="btn-auth" id="btn-send-code" data-i18n="auth.sendCode">Send confirmation code</button>
+      </div>
+
+      <!-- CONFIRM CODE (step 2) -->
+      <div class="auth-form" id="tab-confirm">
+        <div class="confirm-icon">✉️</div>
+        <div class="confirm-hint" id="confirm-hint-text"></div>
+        <div class="code-inputs" id="code-inputs">
+          <input class="code-cell" type="text" maxlength="1" />
+          <input class="code-cell" type="text" maxlength="1" />
+          <input class="code-cell" type="text" maxlength="1" />
+          <input class="code-cell" type="text" maxlength="1" />
+          <input class="code-cell" type="text" maxlength="1" />
+          <input class="code-cell" type="text" maxlength="1" />
+        </div>
+        <button class="btn-auth" id="btn-verify" data-i18n="auth.verify">Confirm</button>
+        <div class="resend-row">
+          <span class="resend-timer" id="resend-timer"></span>
+          <button class="auth-link" id="btn-resend" style="display:none" data-i18n="auth.resend">Resend code</button>
+        </div>
+        <button class="auth-link" id="btn-back-register" data-i18n="auth.back">← Back</button>
+      </div>
+
+      <!-- FORGOT PASSWORD -->
+      <div class="auth-form" id="tab-forgot">
+        <div class="form-group">
+          <label data-i18n="auth.emailOrPhone">Email or phone</label>
+          <input id="f-identity" type="text" placeholder="user@example.com" />
+        </div>
+        <button class="btn-auth" id="btn-reset" data-i18n="auth.sendReset">Send reset link</button>
+        <button class="auth-link" id="btn-back-login" data-i18n="auth.back">← Back</button>
+      </div>
+
+    </div>
+
+    <div class="auth-footer" data-i18n="auth.footer">MC Orchestrator · Student diploma edition</div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/toast.js"></script>
+  <script src="assets/js/auth.js"></script>
+</body>
+</html>
