@@ -46,7 +46,7 @@
       <!-- LOGIN -->
       <div class="auth-form active" id="tab-login">
         <div class="form-group">
-          <label data-i18n="auth.emailOrPhone">Email or phone</label>
+          <label data-i18n="auth.identity">Email, username or phone</label>
           <input id="l-identity" type="text" placeholder="user@example.com" autocomplete="username" />
         </div>
         <div class="form-group">
@@ -151,13 +151,14 @@
 
     </div>
 
-    <div class="auth-footer" data-i18n="auth.footer">MC Orchestrator · Student diploma edition</div>
+    <div class="auth-footer" data-i18n="auth.footer">MC Orchestrator</div>
   </div>
 
   <div id="toast-container"></div>
 
-  <script src="assets/js/i18n.js"></script>
-  <script src="assets/js/toast.js"></script>
+  <script src="assets/js/core/i18n.js"></script>
+  <script src="assets/js/core/toast.js"></script>
+  <script src="assets/js/core/api.js"></script>
   <script src="assets/js/auth.js"></script>
 </body>
 </html>

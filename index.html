@@ -69,10 +69,6 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="sidebar-badge">
-        <span class="sidebar-badge-dot"></span>
-        <span data-i18n="sidebar.clusterHealthy">Cluster healthy</span>
-      </div>
       <button class="sidebar-logout" id="btn-logout">
         <span class="sidebar-logout-icon">⏻</span>
         <span data-i18n="sidebar.logout">Sign out</span>
@@ -87,7 +83,6 @@
         <div class="topbar-subtitle" data-i18n="topbar.subtitle">Deploy, monitor and configure servers in minutes</div>
       </div>
       <div class="topbar-actions">
-        <div class="chip" data-i18n="topbar.plan">Student diploma edition</div>
         <div class="toggle-group">
           <div class="lang-toggle">
             <button class="lang-btn active" data-lang-select="en">EN</button>
@@ -105,6 +100,7 @@
 
       <!-- DASHBOARD -->
       <section class="view active" data-view="dashboard">
+        <div id="profile-block"></div>
         <div class="card-grid">
           <article class="card">
             <div class="card-header">
@@ -194,32 +190,56 @@
       <!-- CONFIGS -->
       <section class="view" data-view="configs">
         <div class="card">
-          <div class="card-header"><div class="card-title" data-i18n="configs.title">Configuration editor</div></div>
-          <div class="card-footer" data-i18n="configs.hint">Attach your YAML/properties editor here</div>
+          <div class="card-header">
+            <div class="card-title" data-i18n="configs.title">Configuration editor</div>
+          </div>
+          <div class="placeholder-empty">
+            <div class="placeholder-icon">📝</div>
+            <div class="placeholder-title" data-i18n="configs.title">Configuration editor</div>
+            <div class="placeholder-hint" data-i18n="configs.hint">Select a server to edit its configuration files</div>
+          </div>
         </div>
       </section>
 
       <!-- INFRASTRUCTURE -->
       <section class="view" data-view="infrastructure">
         <div class="card">
-          <div class="card-header"><div class="card-title" data-i18n="infra.title">Infrastructure presets</div></div>
-          <div class="card-footer" data-i18n="infra.hint">Manage CPU cores, RAM, disk quotas, default JVM flags</div>
+          <div class="card-header">
+            <div class="card-title" data-i18n="infra.title">Infrastructure</div>
+          </div>
+          <div class="placeholder-empty">
+            <div class="placeholder-icon">⚙</div>
+            <div class="placeholder-title" data-i18n="infra.title">Infrastructure</div>
+            <div class="placeholder-hint" data-i18n="infra.hint">Select a server to manage its resources</div>
+          </div>
         </div>
       </section>
 
       <!-- METRICS -->
       <section class="view" data-view="metrics">
         <div class="card">
-          <div class="card-header"><div class="card-title" data-i18n="metrics.title">Metrics dashboard</div></div>
-          <div class="card-footer" data-i18n="metrics.hint">Insert charts for CPU, RAM, disk, online players</div>
+          <div class="card-header">
+            <div class="card-title" data-i18n="metrics.title">Metrics</div>
+          </div>
+          <div class="placeholder-empty">
+            <div class="placeholder-icon">📊</div>
+            <div class="placeholder-title" data-i18n="metrics.title">Metrics</div>
+            <div class="placeholder-hint" data-i18n="metrics.hint">Select a server to view metrics</div>
+          </div>
         </div>
       </section>
 
       <!-- LOGS -->
       <section class="view" data-view="logs">
         <div class="card">
-          <div class="card-header"><div class="card-title" data-i18n="logs.title">Logs & events</div></div>
-          <div class="card-footer" data-i18n="logs.hint">Console output, deployment logs, alerts</div>
+          <div class="card-header">
+            <div class="card-title" data-i18n="logs.title">Logs</div>
+          </div>
+          <div class="placeholder-empty">
+            <div class="placeholder-icon">📜</div>
+            <div class="placeholder-title" data-i18n="logs.title">Logs</div>
+            <div class="placeholder-hint" data-i18n="logs.hint">Select a server to view its logs</div>
+          </div>
         </div>
       </section>
 
@@ -550,16 +570,86 @@
   </div>
 </div>
 
-<script src="assets/js/i18n.js"></script>
-<script src="assets/js/toast.js"></script>
-<script src="assets/js/repository.js"></script>
-<script src="assets/js/server-controller.js"></script>
-<script src="assets/js/view-model.js"></script>
-<script src="assets/js/dashboard-view.js"></script>
-<script src="assets/js/servers-view.js"></script>
-<script src="assets/js/modal-view.js"></script>
-<script src="assets/js/custom-select.js"></script>
-<script src="assets/js/nodes-view.js"></script>
+<!-- Модалка: редактировать профиль -->
+<div class="modal-overlay" id="profile-edit-overlay">
+  <div class="modal">
+    <div class="modal-title" data-i18n="profile.editTitle">Редактировать профиль</div>
+    <div class="form-group">
+      <label data-i18n="auth.username">Имя пользователя</label>
+      <input id="pe-username" type="text">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="pe-email" type="email">
+    </div>
+    <div class="form-group">
+      <label data-i18n="auth.phone">Телефон</label>
+      <input id="pe-phone" type="tel">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="pe-cancel" data-i18n="modal.cancel">Отмена</button>
+      <button class="btn-create" id="pe-save" data-i18n="profile.save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка: сменить пароль -->
+<div class="modal-overlay" id="profile-pwd-overlay">
+  <div class="modal">
+    <div class="modal-title" data-i18n="profile.changePassword">Изменить пароль</div>
+    <div class="form-group">
+      <label data-i18n="profile.currentPassword">Текущий пароль</label>
+      <div class="input-eye-wrap">
+        <input id="pp-cur" type="password">
+        <button class="eye-btn" type="button" data-target="pp-cur" style="opacity:0.45"></button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label data-i18n="profile.newPassword">Новый пароль</label>
+      <div class="input-eye-wrap">
+        <input id="pp-new" type="password">
+        <button class="eye-btn" type="button" data-target="pp-new" style="opacity:0.45"></button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label data-i18n="auth.confirmPassword">Подтвердите пароль</label>
+      <div class="input-eye-wrap">
+        <input id="pp-new2" type="password">
+        <button class="eye-btn" type="button" data-target="pp-new2" style="opacity:0.45"></button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="pp-cancel" data-i18n="modal.cancel">Отмена</button>
+      <button class="btn-create" id="pp-save" data-i18n="profile.save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- core -->
+<script src="assets/js/core/i18n.js"></script>
+<script src="assets/js/core/toast.js"></script>
+<script src="assets/js/core/api.js"></script>
+<script src="assets/js/core/router.js"></script>
+<!-- components -->
+<script src="assets/js/components/custom-select.js"></script>
+<script src="assets/js/components/modal.js"></script>
+<!-- services -->
+<script src="assets/js/services/nodes.service.js"></script>
+<script src="assets/js/services/servers.service.js"></script>
+<!-- views -->
+<script src="assets/js/views/dashboard.view.js"></script>
+<script src="assets/js/views/nodes.view.js"></script>
+<script src="assets/js/views/servers.view.js"></script>
+<script src="assets/js/views/metrics.view.js"></script>
+<script src="assets/js/views/logs.view.js"></script>
+<script src="assets/js/views/configs.view.js"></script>
+<script src="assets/js/views/infrastructure.view.js"></script>
+<!-- app -->
 <script src="assets/js/app.js"></script>
+<script>
+  if (!localStorage.getItem('token') && !localStorage.getItem('demo_mode')) {
+    window.location.href = 'auth.html';
+  }
+</script>
 </body>
 </html>
