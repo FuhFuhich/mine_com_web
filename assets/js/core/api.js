@@ -29,6 +29,7 @@ const Api = (() => {
     get:    (path)       => _request('GET',    path),
     post:   (path, body) => _request('POST',   path, body),
     put:    (path, body) => _request('PUT',    path, body),
+    patch:  (path, body) => _request('PATCH',  path, body),
     delete: (path)       => _request('DELETE', path),
     getBase: () => BASE,
 

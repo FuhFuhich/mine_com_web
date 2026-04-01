@@ -2,12 +2,14 @@
 <html lang="en" data-lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Minecraft Server Orchestrator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MC Orchestrator</title>
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body data-theme="dark">
 <div class="app-shell">
 
+  <!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="logo-pill">MC</div>
@@ -17,40 +19,29 @@
       </div>
     </div>
 
-    <div class="sidebar-nav">
+    <nav class="sidebar-nav">
       <div class="nav-section-title" data-i18n="nav.section.main">Main</div>
       <ul class="nav-list">
         <li class="nav-item">
           <button class="nav-link active" data-view-target="dashboard">
-            <span class="nav-link-icon">⚡</span>
-            <span data-i18n="nav.dashboard">Dashboard</span>
+            <span class="nav-link-icon">👤</span>
+            <span data-i18n="nav.dashboard">Profile &amp; Overview</span>
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" data-view-target="nodes">
-            <span class="nav-link-icon">🖧</span>
-            <span data-i18n="nav.nodes">Servers</span>
+            <span class="nav-link-icon">🖥</span>
+            <span data-i18n="nav.nodes">Physical Nodes</span>
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" data-view-target="servers">
-            <span class="nav-link-icon">🖥</span>
-            <span data-i18n="nav.servers">Minecraft servers</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" data-view-target="configs">
-            <span class="nav-link-icon">📝</span>
-            <span data-i18n="nav.configs">Configs</span>
-          </button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" data-view-target="infrastructure">
-            <span class="nav-link-icon">⚙</span>
-            <span data-i18n="nav.infrastructure">Infrastructure</span>
+            <span class="nav-link-icon">⚡</span>
+            <span data-i18n="nav.servers">Minecraft Servers</span>
           </button>
         </li>
       </ul>
+
       <div class="nav-section-title" data-i18n="nav.section.tools">Tools</div>
       <ul class="nav-list">
         <li class="nav-item">
@@ -66,7 +57,29 @@
           </button>
         </li>
       </ul>
-    </div>
+
+      <div class="nav-section-title" data-i18n="nav.section.manage">Manage</div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="configs">
+            <span class="nav-link-icon">📝</span>
+            <span data-i18n="nav.configs">Configs</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="files">
+            <span class="nav-link-icon">📂</span>
+            <span data-i18n="nav.files">Files</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-view-target="backups">
+            <span class="nav-link-icon">💾</span>
+            <span data-i18n="nav.backups">Backups</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
 
     <div class="sidebar-footer">
       <button class="sidebar-logout" id="btn-logout">
@@ -76,10 +89,11 @@
     </div>
   </aside>
 
+  <!-- ══ MAIN PANEL ════════════════════════════════════════════ -->
   <main class="main-panel">
     <header class="topbar">
       <div class="topbar-left">
-        <div class="topbar-title" data-i18n="topbar.title">Minecraft Server Control</div>
+        <div class="topbar-title" data-i18n="topbar.title">MC Orchestrator</div>
         <div class="topbar-subtitle" data-i18n="topbar.subtitle">Deploy, monitor and configure servers in minutes</div>
       </div>
       <div class="topbar-actions">
@@ -98,65 +112,29 @@
 
     <section class="content">
 
-      <!-- DASHBOARD -->
+      <!-- DASHBOARD / PROFILE -->
       <section class="view active" data-view="dashboard">
         <div id="profile-block"></div>
-        <div class="card-grid">
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title" data-i18n="dash.totalServers">Total servers</div>
-              <span class="badge-pill" data-i18n="dash.autoDeploy">Auto deploy enabled</span>
-            </div>
-            <div class="card-kpi" id="kpi-total">—</div>
-            <div class="card-kpi-sub" data-i18n="dash.totalServersHint">Across Ubuntu & Debian nodes</div>
-            <div class="card-footer" data-i18n="dash.totalServersFooter">Tip: new servers inherit default JVM & backup policy</div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title" data-i18n="dash.onlinePlayers">Online players</div>
-            </div>
-            <div class="card-kpi" id="kpi-online">—</div>
-            <div class="card-kpi-sub">online</div>
-            <div class="card-footer" data-i18n="dash.onlinePlayersFooter">Peak load around 20:00 server time</div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title" data-i18n="dash.cpuLoad">Average CPU load</div>
-            </div>
-            <div class="card-kpi" id="kpi-cpu">—</div>
-            <div class="card-kpi-sub" data-i18n="dash.cpuLoadSub">Across all JVM containers</div>
-            <div class="card-footer" data-i18n="dash.cpuLoadFooter">Consider scaling nodes when >75% for 15 min</div>
-          </article>
-
-          <article class="card">
-            <div class="card-header">
-              <div class="card-title" data-i18n="dash.diskUsage">Disk usage</div>
-            </div>
-            <div class="card-kpi" id="kpi-disk">—</div>
-            <div class="card-kpi-sub">of 2 TB</div>
-            <div class="card-footer" data-i18n="dash.diskUsageFooter">Worlds & modpacks stored in object storage</div>
-          </article>
-        </div>
+        <div id="dashboard-summary"></div>
       </section>
 
-      <!-- NODES (физические серверы) -->
+      <!-- NODES -->
       <section class="view" data-view="nodes">
         <div class="card table-card">
           <div class="card-header">
-            <div class="card-title" data-i18n="nodes.title">Servers</div>
-            <button class="badge-pill" id="btn-new-node" data-i18n="nodes.newNode">+ Add server</button>
+            <div class="card-title" data-i18n="nodes.title">Physical Nodes</div>
+            <button class="badge-pill" id="btn-new-node" data-i18n="nodes.newNode">+ Add Node</button>
           </div>
           <table class="table">
             <thead>
               <tr>
                 <th data-i18n="nodes.table.name">Name</th>
-                <th data-i18n="nodes.table.ip">IP address</th>
-                <th data-i18n="nodes.table.port">SSH port</th>
-                <th data-i18n="nodes.table.user">User</th>
+                <th data-i18n="nodes.table.ip">IP Address</th>
+                <th data-i18n="nodes.table.port">SSH Port</th>
+                <th data-i18n="nodes.table.user">SSH User</th>
                 <th data-i18n="nodes.table.status">Status</th>
                 <th data-i18n="nodes.table.actions">Actions</th>
+                <th data-i18n="nodes.table.role">My Role</th>
               </tr>
             </thead>
             <tbody id="nodes-tbody"></tbody>
@@ -164,22 +142,23 @@
         </div>
       </section>
 
-
-      <!-- SERVERS -->
+      <!-- MINECRAFT SERVERS -->
       <section class="view" data-view="servers">
         <div class="card table-card">
           <div class="card-header">
-            <div class="card-title" data-i18n="servers.title">Servers</div>
-            <button class="badge-pill" id="btn-new-server" data-i18n="servers.newServer">+ New server</button>
+            <div class="card-title" data-i18n="servers.title">Minecraft Servers</div>
+            <button class="badge-pill" id="btn-new-server" data-i18n="servers.newServer">+ New Server</button>
           </div>
           <table class="table">
             <thead>
               <tr>
-                <th data-i18n="table.server">Server</th>
-                <th data-i18n="table.version">Version</th>
-                <th data-i18n="table.node">Node</th>
-                <th data-i18n="table.status">Status</th>
-                <th data-i18n="table.actions">Actions</th>
+                <th data-i18n="servers.table.name">Name</th>
+                <th data-i18n="servers.table.version">Version / Loader</th>
+                <th data-i18n="servers.table.node">Node</th>
+                <th data-i18n="servers.table.port">Port</th>
+                <th data-i18n="servers.table.resources">Resources</th>
+                <th data-i18n="servers.table.status">Status</th>
+                <th data-i18n="servers.table.actions">Actions</th>
               </tr>
             </thead>
             <tbody id="servers-tbody"></tbody>
@@ -187,340 +166,53 @@
         </div>
       </section>
 
-      <!-- CONFIGS -->
-      <section class="view" data-view="configs">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title" data-i18n="configs.title">Configuration editor</div>
-          </div>
-          <div class="placeholder-empty">
-            <div class="placeholder-icon">📝</div>
-            <div class="placeholder-title" data-i18n="configs.title">Configuration editor</div>
-            <div class="placeholder-hint" data-i18n="configs.hint">Select a server to edit its configuration files</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- INFRASTRUCTURE -->
-      <section class="view" data-view="infrastructure">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title" data-i18n="infra.title">Infrastructure</div>
-          </div>
-          <div class="placeholder-empty">
-            <div class="placeholder-icon">⚙</div>
-            <div class="placeholder-title" data-i18n="infra.title">Infrastructure</div>
-            <div class="placeholder-hint" data-i18n="infra.hint">Select a server to manage its resources</div>
-          </div>
-        </div>
-      </section>
-
       <!-- METRICS -->
       <section class="view" data-view="metrics">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title" data-i18n="metrics.title">Metrics</div>
-          </div>
-          <div class="placeholder-empty">
-            <div class="placeholder-icon">📊</div>
-            <div class="placeholder-title" data-i18n="metrics.title">Metrics</div>
-            <div class="placeholder-hint" data-i18n="metrics.hint">Select a server to view metrics</div>
-          </div>
-        </div>
+        <div id="metrics-container"></div>
       </section>
 
       <!-- LOGS -->
       <section class="view" data-view="logs">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title" data-i18n="logs.title">Logs</div>
-          </div>
-          <div class="placeholder-empty">
-            <div class="placeholder-icon">📜</div>
-            <div class="placeholder-title" data-i18n="logs.title">Logs</div>
-            <div class="placeholder-hint" data-i18n="logs.hint">Select a server to view its logs</div>
-          </div>
-        </div>
+        <div id="logs-container"></div>
+      </section>
+
+      <!-- CONFIGS -->
+      <section class="view" data-view="configs">
+        <div id="configs-container"></div>
+      </section>
+
+      <!-- FILES -->
+      <section class="view" data-view="files">
+        <div id="files-container"></div>
+      </section>
+
+      <!-- BACKUPS -->
+      <section class="view" data-view="backups">
+        <div id="backups-container"></div>
       </section>
 
     </section>
   </main>
 </div>
 
-<!-- CREATE SERVER MODAL -->
-<div class="modal-overlay" id="server-modal-overlay">
-  <div class="modal modal--wide">
-    <div class="modal-title" data-i18n="modal.createServer">Create server</div>
-    <form id="modal-form" onsubmit="return false">
+<!-- ══ TOAST CONTAINER ══════════════════════════════════════════ -->
+<div id="toast-container"></div>
 
-      <div class="form-group">
-        <label data-i18n="modal.serverName">Server name</label>
-        <input id="f-name" type="text" placeholder="Survival-RU-1" />
-      </div>
-
-      <div class="form-group">
-        <label data-i18n="modal.targetNode">Deploy to server</label>
-        <select id="f-node">
-          <option value="" data-i18n="modal.selectNode">— Select server —</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label data-i18n="modal.version">Minecraft version</label>
-          <select id="f-version">
-            <option value="1.20.4">1.20.4</option>
-            <option value="1.20.1">1.20.1</option>
-            <option value="1.19.4">1.19.4</option>
-            <option value="1.18.2">1.18.2</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label data-i18n="modal.modLoader">Mod loader</label>
-          <select id="f-modloader">
-            <option value="Paper">Paper</option>
-            <option value="Spigot">Spigot</option>
-            <option value="Forge">Forge</option>
-            <option value="Fabric">Fabric</option>
-            <option value="NeoForge">NeoForge</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label data-i18n="modal.modLoaderVersion">Mod loader version</label>
-        <input id="f-modloader-version" type="text" placeholder="e.g. 47.3.0" />
-      </div>
-
-      <!-- Modpack ZIP -->
-      <div class="form-group">
-        <label data-i18n="modal.modpack">Modpack (ZIP)</label>
-        <div class="dropzone" id="f-dropzone">
-          <span class="dropzone-icon">📦</span>
-          <span class="dropzone-text" data-i18n="modal.dropzoneHint">Drag & drop .zip modpack here</span>
-          <span class="dropzone-filename" id="dropzone-filename"></span>
-          <input type="file" id="f-modpack-file" accept=".zip" style="display:none" />
-        </div>
-      </div>
-
-      <!-- Mod Loader JAR -->
-      <div class="form-group">
-        <label data-i18n="modal.modLoaderJar">Mod loader JAR (optional)</label>
-        <div class="dropzone" id="f-dropzone-jar">
-          <span class="dropzone-icon">☕</span>
-          <span class="dropzone-text" data-i18n="modal.dropzoneJarHint">Drag & drop .jar mod loader here</span>
-          <span class="dropzone-filename" id="dropzone-jar-filename"></span>
-          <input type="file" id="f-modloader-file" accept=".jar" style="display:none" />
-        </div>
-      </div>
-
-      <!-- Deploy target -->
-      <div class="form-group">
-        <label data-i18n="modal.deployTarget">Deploy target</label>
-        <div class="radio-group">
-          <label class="radio-option">
-            <input type="radio" name="deploy-target" id="f-target-server" value="server" checked />
-            <span data-i18n="modal.targetServer">Server (bare metal)</span>
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="deploy-target" id="f-target-docker" value="docker" />
-            <span data-i18n="modal.targetDocker">Docker container</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- SERVER FIELDS -->
-      <div id="fields-server" class="deploy-fields">
-        <div class="form-section-title" data-i18n="modal.serverResources">Server resources</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.ram">RAM (MB)</label>
-            <input id="f-ram" type="number" value="2048" min="512" step="512" />
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.cpu">CPU cores</label>
-            <input id="f-cpu" type="number" value="2" min="1" max="32" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.disk">Disk (GB)</label>
-            <input id="f-disk" type="number" value="20" min="5" step="5" />
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.port">Server port</label>
-            <input id="f-port" type="number" value="25565" min="1024" max="65535" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label data-i18n="modal.jvmFlags">JVM flags (optional)</label>
-          <input id="f-jvm" type="text" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" />
-        </div>
-
-        <!-- Convenience options: Server -->
-        <div class="form-section-title" data-i18n="modal.convenience">Convenience</div>
-        <div class="toggle-checks">
-          <label class="check-option">
-            <input type="checkbox" id="f-max-resources" />
-            <span data-i18n="modal.maxResources">Allocate all available resources</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-auto-restart" checked />
-            <span data-i18n="modal.autoRestart">Auto-restart on crash</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-auto-backup" checked />
-            <span data-i18n="modal.autoBackup">Scheduled backups</span>
-          </label>
-          <div class="form-subrow" id="f-backup-interval-wrap">
-            <label data-i18n="modal.backupInterval">Backup every (hours)</label>
-            <input id="f-backup-interval" type="number" value="6" min="1" max="168" />
-          </div>
-          <label class="check-option">
-            <input type="checkbox" id="f-backup-cleanup" checked />
-            <span data-i18n="modal.backupCleanup">Auto-delete backups older than</span>
-          </label>
-          <div class="form-subrow" id="f-backup-ttl-wrap">
-            <label data-i18n="modal.backupTtl">Keep backups for (days)</label>
-            <input id="f-backup-ttl" type="number" value="7" min="1" max="365" />
-          </div>
-          <label class="check-option">
-            <input type="checkbox" id="f-whitelist" />
-            <span data-i18n="modal.whitelist">Enable whitelist</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-rcon" />
-            <span data-i18n="modal.rcon">Enable RCON (remote console)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- DOCKER FIELDS -->
-      <div id="fields-docker" class="deploy-fields" style="display:none">
-        <div class="form-section-title" data-i18n="modal.dockerResources">Docker resources</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.ram">Memory limit (MB)</label>
-            <input id="f-docker-ram" type="number" value="2048" min="512" step="512" />
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.cpu">CPU limit (cores)</label>
-            <input id="f-docker-cpu" type="number" value="2" min="1" max="32" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.disk">Volume size (GB)</label>
-            <input id="f-docker-disk" type="number" value="20" min="5" step="5" />
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.port">Exposed port</label>
-            <input id="f-docker-port" type="number" value="25565" min="1024" max="65535" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.dockerImage">Base image</label>
-            <select id="f-docker-image">
-              <option value="eclipse-temurin:17">eclipse-temurin:17 (Java 17)</option>
-              <option value="eclipse-temurin:21">eclipse-temurin:21 (Java 21)</option>
-              <option value="amazoncorretto:17">amazoncorretto:17</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.restartPolicy">Restart policy</label>
-            <select id="f-restart-policy">
-              <option value="unless-stopped">unless-stopped</option>
-              <option value="always">always</option>
-              <option value="on-failure">on-failure</option>
-              <option value="no">no</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label data-i18n="modal.networkMode">Network mode</label>
-            <select id="f-network-mode">
-              <option value="bridge">bridge (default)</option>
-              <option value="host">host</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="modal.dockerMemSwap">Memory swap (MB)</label>
-            <input id="f-docker-swap" type="number" value="512" min="0" step="256" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label data-i18n="modal.jvmFlags">JVM flags (optional)</label>
-          <input id="f-docker-jvm" type="text" placeholder="-XX:+UseG1GC -XX:MaxGCPauseMillis=50" />
-        </div>
-
-        <!-- Convenience options: Docker -->
-        <div class="form-section-title" data-i18n="modal.convenience">Convenience</div>
-        <div class="toggle-checks">
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-max-resources" />
-            <span data-i18n="modal.maxResources">Allocate all available resources</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-auto-backup" checked />
-            <span data-i18n="modal.autoBackup">Scheduled backups (volume snapshot)</span>
-          </label>
-          <div class="form-subrow" id="f-docker-backup-interval-wrap">
-            <label data-i18n="modal.backupInterval">Backup every (hours)</label>
-            <input id="f-docker-backup-interval" type="number" value="6" min="1" max="168" />
-          </div>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-backup-cleanup" checked />
-            <span data-i18n="modal.backupCleanup">Auto-delete backups older than</span>
-          </label>
-          <div class="form-subrow" id="f-docker-backup-ttl-wrap">
-            <label data-i18n="modal.backupTtl">Keep backups for (days)</label>
-            <input id="f-docker-backup-ttl" type="number" value="7" min="1" max="365" />
-          </div>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-healthcheck" checked />
-            <span data-i18n="modal.healthcheck">Enable Docker healthcheck</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-readonly-fs" />
-            <span data-i18n="modal.readonlyFs">Read-only filesystem (except volumes)</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-log-limit" checked />
-            <span data-i18n="modal.logLimit">Limit container log size (100 MB)</span>
-          </label>
-          <label class="check-option">
-            <input type="checkbox" id="f-docker-rcon" />
-            <span data-i18n="modal.rcon">Enable RCON (remote console)</span>
-          </label>
-        </div>
-      </div>
-
-    </form>
-    <div class="modal-actions">
-      <button class="btn-cancel" id="modal-cancel" data-i18n="modal.cancel">Cancel</button>
-      <button class="btn-create" id="modal-create" data-i18n="modal.create">Create</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD NODE MODAL -->
+<!-- ══ MODAL: ADD / EDIT NODE ═══════════════════════════════════ -->
 <div class="modal-overlay" id="node-modal-overlay">
   <div class="modal modal--wide">
-    <div class="modal-title" data-i18n="nodes.modal.title">Add server</div>
+    <div class="modal-title" id="node-modal-title">Add Node</div>
     <form id="node-modal-form" onsubmit="return false">
-
       <div class="form-row">
         <div class="form-group">
-          <label data-i18n="nodes.modal.name">Server name</label>
+          <label data-i18n="nodes.modal.name">Node name</label>
           <input id="n-name" type="text" placeholder="prod-node-01" />
         </div>
         <div class="form-group">
           <label data-i18n="nodes.modal.ip">IP address</label>
-          <input id="n-ip" type="text" placeholder="192.168.1.100" />
+          <input id="n-ip" type="text" placeholder="95.165.27.159" />
         </div>
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label data-i18n="nodes.modal.sshPort">SSH port</label>
@@ -531,7 +223,10 @@
           <input id="n-ssh-user" type="text" placeholder="root" />
         </div>
       </div>
-
+      <div class="form-group">
+        <label data-i18n="nodes.modal.description">Description (optional)</label>
+        <input id="n-description" type="text" placeholder="Main production node" />
+      </div>
       <div class="form-group">
         <label data-i18n="nodes.modal.sshKey">Authentication</label>
         <div class="radio-group" style="margin-bottom:8px">
@@ -545,37 +240,238 @@
           </label>
         </div>
         <div id="n-key-group">
-          <div class="dropzone" id="n-key-dropzone">
-            <span class="dropzone-icon">🔑</span>
-            <span class="dropzone-text" data-i18n="nodes.modal.keyHint">Drag & drop .pem / id_rsa here</span>
-            <span class="dropzone-filename" id="n-key-filename"></span>
-            <input type="file" id="n-key-file" accept=".pem,.key" style="display:none" />
+          <div class="form-group" style="margin-bottom:6px">
+            <textarea id="n-key-textarea" rows="5"
+              placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;...&#10;-----END OPENSSH PRIVATE KEY-----"
+              style="font-family:monospace;font-size:11px;resize:vertical;border-radius:6px;
+                     border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);
+                     color:inherit;padding:8px;outline:none;width:100%;box-sizing:border-box"></textarea>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="action-btn action-btn--neutral" id="n-key-load-btn" data-i18n="nodes.modal.loadFile">Load from file</button>
+            <span id="n-key-filename" style="font-size:11px;opacity:0.6"></span>
+            <input type="file" id="n-key-file" accept=".pem,.key,.rsa" style="display:none" />
           </div>
         </div>
         <div id="n-pwd-group" style="display:none">
           <input id="n-password" type="password" placeholder="••••••••" />
         </div>
       </div>
-
-      <div class="form-group">
-        <label data-i18n="nodes.modal.description">Description (optional)</label>
-        <input id="n-description" type="text" placeholder="Main production node" />
-      </div>
-
     </form>
     <div class="modal-actions">
       <button class="btn-cancel" id="node-modal-cancel" data-i18n="modal.cancel">Cancel</button>
-      <button class="btn-create" id="node-modal-create" data-i18n="nodes.modal.add">Add server</button>
+      <button class="btn-create" id="node-modal-submit" data-i18n="nodes.modal.add">Add Node</button>
     </div>
   </div>
 </div>
 
-<!-- Модалка: редактировать профиль -->
+<!-- ══ MODAL: CREATE / EDIT MC SERVER ═══════════════════════════ -->
+<div class="modal-overlay" id="mc-modal-overlay">
+  <div class="modal modal--wide" style="width:520px">
+    <div class="modal-title" id="mc-modal-title">Create Minecraft Server</div>
+    <form id="mc-server-form" onsubmit="return false">
+
+      <!-- Basic -->
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="modal.serverName">Server name</label>
+          <input id="f-name" type="text" placeholder="neoforge-docker-01" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="modal.targetNode">Deploy to node</label>
+          <select id="f-node">
+            <option value="" data-i18n="modal.selectNode">— Select node —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Deploy target -->
+      <div class="form-group">
+        <label data-i18n="modal.deployTarget">Deploy target</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="mc-deploy-target" value="docker" checked />
+            <span data-i18n="modal.targetDocker">Docker</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="mc-deploy-target" value="baremetal" />
+            <span data-i18n="modal.targetBaremetal">Bare Metal</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Docker: catalog-driven dropdowns -->
+      <div id="mc-docker-fields" class="deploy-fields">
+        <div class="form-section-title">Software (Docker)</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.minecraftVersion">Minecraft version</label>
+            <select id="f-mc-version">
+              <option value="" data-i18n="modal.selectVersion">— Select version —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.modLoader">Mod loader</label>
+            <select id="f-mod-loader">
+              <option value="" data-i18n="modal.selectLoader">— Select loader —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="modal.modLoaderVersion">Loader version</label>
+          <select id="f-mod-loader-version">
+            <option value="" data-i18n="modal.selectLoaderVersion">— Select loader version —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Bare metal: bundle dropdown -->
+      <div id="mc-baremetal-fields" class="deploy-fields" style="display:none">
+        <div class="form-section-title">Software (Bare Metal)</div>
+        <div class="form-group">
+          <label data-i18n="modal.bundle">Bundle</label>
+          <select id="f-bundle">
+            <option value="" data-i18n="modal.selectBundle">— Select bundle —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div class="deploy-fields">
+        <div class="form-section-title" data-i18n="modal.resources">Resources</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.gamePort">Game port</label>
+            <input id="f-game-port" type="number" value="25565" min="1024" max="65535" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.storageType">Storage type</label>
+            <select id="f-storage">
+              <option value="ssd">SSD</option>
+              <option value="hdd">HDD</option>
+              <option value="ram">RAM</option>
+            </select>
+          </div>
+        </div>
+        <div class="toggle-checks" style="margin-bottom:8px">
+          <label class="check-option">
+            <input type="checkbox" id="f-allocate-all" />
+            <span data-i18n="modal.allocateAll">Allocate all available resources</span>
+          </label>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.ram">RAM (MB)</label>
+            <input id="f-ram" type="number" value="4096" min="512" step="512" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.cpu">CPU cores</label>
+            <input id="f-cpu" type="number" value="2" min="1" max="32" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label data-i18n="modal.disk">Disk (MB)</label>
+            <input id="f-disk" type="number" value="20480" min="1024" step="1024" />
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.logMaxFiles">Max log files</label>
+            <input id="f-log-max" type="number" value="10" min="1" max="100" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Backup -->
+      <div class="deploy-fields">
+        <div class="form-section-title" data-i18n="modal.backup">Backup settings</div>
+        <div class="toggle-checks">
+          <label class="check-option">
+            <input type="checkbox" id="f-backup-enabled" />
+            <span data-i18n="modal.backupEnabled">Enable automatic backups</span>
+          </label>
+        </div>
+        <div id="f-backup-options" style="display:none;margin-top:8px">
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="modal.backupInterval">Interval (hours)</label>
+              <input id="f-backup-interval" type="number" value="6" min="1" max="168" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="modal.backupMaxCount">Max count</label>
+              <input id="f-backup-max" type="number" value="10" min="1" max="100" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-i18n="modal.backupPath">Backup path</label>
+            <input id="f-backup-path" type="text" placeholder="/home/user/mc-backups/server-name" />
+          </div>
+          <div class="toggle-checks">
+            <label class="check-option">
+              <input type="checkbox" id="f-backup-auto-delete" />
+              <span data-i18n="modal.backupAutoDelete">Auto-delete old backups</span>
+            </label>
+            <div class="form-subrow" style="padding-left:22px">
+              <label data-i18n="modal.backupDeleteAfter">Delete after (hours)</label>
+              <input id="f-backup-delete-after" type="number" value="168" min="1" style="width:80px" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <div class="deploy-fields">
+        <div class="form-section-title" data-i18n="modal.advanced">Advanced</div>
+        <div class="toggle-checks">
+          <label class="check-option">
+            <input type="checkbox" id="f-auto-restart" checked />
+            <span data-i18n="modal.autoRestart">Auto-restart on crash</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-whitelist" />
+            <span data-i18n="modal.whitelist">Enable whitelist</span>
+          </label>
+          <label class="check-option">
+            <input type="checkbox" id="f-rcon-enabled" />
+            <span data-i18n="modal.rcon">Enable RCON</span>
+          </label>
+        </div>
+        <div id="f-rcon-options" style="display:none;margin-top:8px">
+          <div class="form-row">
+            <div class="form-group">
+              <label data-i18n="modal.rconPort">RCON port</label>
+              <input id="f-rcon-port" type="number" value="25575" min="1024" max="65535" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="modal.rconPassword">RCON password</label>
+              <input id="f-rcon-password" type="password" placeholder="••••••••" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:8px">
+          <label data-i18n="modal.modpack">Upload modpack (ZIP, optional)</label>
+          <div class="modpack-zone" id="f-modpack-zone">
+            <span>📦</span>
+            <span class="modpack-hint" data-i18n="modal.modpackHint">Upload a .zip file with mods folder</span>
+            <span id="f-modpack-name" style="font-size:11px;color:var(--accent-green)"></span>
+          </div>
+          <input type="file" id="f-modpack-file" accept=".zip" style="display:none" />
+        </div>
+      </div>
+
+    </form>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="mc-modal-cancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn-create" id="mc-modal-submit" data-i18n="modal.create">Create Server</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: PROFILE EDIT ══════════════════════════════════════ -->
 <div class="modal-overlay" id="profile-edit-overlay">
   <div class="modal">
-    <div class="modal-title" data-i18n="profile.editTitle">Редактировать профиль</div>
+    <div class="modal-title" data-i18n="profile.editTitle">Edit Profile</div>
     <div class="form-group">
-      <label data-i18n="auth.username">Имя пользователя</label>
+      <label data-i18n="auth.username">Username</label>
       <input id="pe-username" type="text">
     </div>
     <div class="form-group">
@@ -583,67 +479,139 @@
       <input id="pe-email" type="email">
     </div>
     <div class="form-group">
-      <label data-i18n="auth.phone">Телефон</label>
+      <label data-i18n="auth.phone">Phone</label>
       <input id="pe-phone" type="tel">
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" id="pe-cancel" data-i18n="modal.cancel">Отмена</button>
-      <button class="btn-create" id="pe-save" data-i18n="profile.save">Сохранить</button>
+      <button class="btn-cancel" id="pe-cancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn-create" id="pe-save" data-i18n="profile.save">Save Changes</button>
     </div>
   </div>
 </div>
 
-<!-- Модалка: сменить пароль -->
+<!-- ══ MODAL: CHANGE PASSWORD ═══════════════════════════════════ -->
 <div class="modal-overlay" id="profile-pwd-overlay">
   <div class="modal">
-    <div class="modal-title" data-i18n="profile.changePassword">Изменить пароль</div>
+    <div class="modal-title" data-i18n="profile.changePassword">Change Password</div>
     <div class="form-group">
-      <label data-i18n="profile.currentPassword">Текущий пароль</label>
+      <label data-i18n="profile.currentPassword">Current password</label>
       <div class="input-eye-wrap">
         <input id="pp-cur" type="password">
-        <button class="eye-btn" type="button" data-target="pp-cur" style="opacity:0.45"></button>
+        <button class="eye-btn" type="button" data-target="pp-cur"></button>
       </div>
     </div>
     <div class="form-group">
-      <label data-i18n="profile.newPassword">Новый пароль</label>
+      <label data-i18n="profile.newPassword">New password</label>
       <div class="input-eye-wrap">
         <input id="pp-new" type="password">
-        <button class="eye-btn" type="button" data-target="pp-new" style="opacity:0.45"></button>
+        <button class="eye-btn" type="button" data-target="pp-new"></button>
       </div>
     </div>
     <div class="form-group">
-      <label data-i18n="auth.confirmPassword">Подтвердите пароль</label>
+      <label data-i18n="auth.confirmPassword">Confirm password</label>
       <div class="input-eye-wrap">
         <input id="pp-new2" type="password">
-        <button class="eye-btn" type="button" data-target="pp-new2" style="opacity:0.45"></button>
+        <button class="eye-btn" type="button" data-target="pp-new2"></button>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-cancel" id="pp-cancel" data-i18n="modal.cancel">Отмена</button>
-      <button class="btn-create" id="pp-save" data-i18n="profile.save">Сохранить</button>
+      <button class="btn-cancel" id="pp-cancel" data-i18n="modal.cancel">Cancel</button>
+      <button class="btn-create" id="pp-save" data-i18n="profile.save">Save</button>
     </div>
   </div>
 </div>
 
+<!-- ══ MODAL: CONFIRM DELETE NODE ═══════════════════════════════ -->
+<div class="modal-overlay" id="node-confirm-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">⚠ Confirm</div>
+    <p id="node-confirm-msg" style="font-size:13px;opacity:0.8;margin:0 0 16px"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="node-confirm-cancel">Cancel</button>
+      <button class="btn-create" id="node-confirm-ok" style="background:rgba(255,80,80,0.85)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: CONFIRM DELETE SERVER ═════════════════════════════ -->
+<div class="modal-overlay" id="server-confirm-overlay">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-title">⚠ Confirm</div>
+    <p id="server-confirm-msg" style="font-size:13px;opacity:0.8;margin:0 0 16px"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="server-confirm-cancel">Cancel</button>
+      <button class="btn-create" id="server-confirm-ok" style="background:rgba(255,80,80,0.85)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: NODE MEMBERS ═══════════════════════════════════════ -->
+<div class="modal-overlay" id="node-members-overlay">
+  <div class="modal" style="width:440px;max-height:80vh;overflow-y:auto">
+    <div class="modal-title" id="node-members-title">Members</div>
+    <div id="node-members-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+    <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:14px">
+      <div class="form-section-title">Add member</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="node-member-username" type="text" placeholder="Username"
+               style="flex:1;min-width:120px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);
+                      background:rgba(255,255,255,0.04);color:inherit;padding:7px 10px;font-size:13px;outline:none">
+        <select id="node-member-role" style="border-radius:6px;border:1px solid rgba(255,255,255,0.1);
+                background:rgba(255,255,255,0.06);color:inherit;padding:7px 10px;font-size:13px;outline:none">
+          <option value="ADMIN">ADMIN</option>
+          <option value="MANAGER">MANAGER</option>
+          <option value="USER">USER</option>
+        </select>
+        <button class="btn-create" id="node-member-add-btn">Add</button>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn-cancel" id="node-members-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: RCON CONSOLE ══════════════════════════════════════ -->
+<div class="modal-overlay" id="rcon-modal-overlay">
+  <div class="modal" style="width:520px">
+    <div class="modal-title" id="rcon-modal-title">RCON Console</div>
+    <div id="rcon-log" class="rcon-log"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <input id="rcon-command" type="text" placeholder="Enter command..."
+             style="flex:1;border-radius:6px;border:1px solid rgba(255,255,255,0.1);
+                    background:rgba(255,255,255,0.04);color:inherit;padding:8px 12px;
+                    font-size:13px;outline:none;font-family:monospace">
+      <button class="btn-create" id="rcon-send-btn" data-i18n="rcon.send">Send</button>
+    </div>
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="btn-cancel" id="rcon-modal-close" data-i18n="modal.cancel">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6/bundles/stomp.umd.min.js"></script>
 <!-- core -->
 <script src="assets/js/core/i18n.js"></script>
 <script src="assets/js/core/toast.js"></script>
 <script src="assets/js/core/api.js"></script>
 <script src="assets/js/core/router.js"></script>
-<!-- components -->
-<script src="assets/js/components/custom-select.js"></script>
-<script src="assets/js/components/modal.js"></script>
 <!-- services -->
 <script src="assets/js/services/nodes.service.js"></script>
 <script src="assets/js/services/servers.service.js"></script>
+<script src="assets/js/services/backups.service.js"></script>
+<script src="assets/js/services/catalog.service.js"></script>
+<script src="assets/js/services/files.service.js"></script>
+<script src="assets/js/services/metrics.service.js"></script>
 <!-- views -->
 <script src="assets/js/views/dashboard.view.js"></script>
 <script src="assets/js/views/nodes.view.js"></script>
 <script src="assets/js/views/servers.view.js"></script>
-<script src="assets/js/views/metrics.view.js"></script>
 <script src="assets/js/views/logs.view.js"></script>
+<script src="assets/js/views/metrics.view.js"></script>
 <script src="assets/js/views/configs.view.js"></script>
-<script src="assets/js/views/infrastructure.view.js"></script>
+<script src="assets/js/views/files.view.js"></script>
+<script src="assets/js/views/backups.view.js"></script>
 <!-- app -->
 <script src="assets/js/app.js"></script>
 <script>

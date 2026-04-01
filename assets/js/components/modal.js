@@ -1,6 +1,5 @@
 const Modal = (() => {
   function init() {
-    // Server modal
     const serverOverlay = document.getElementById('server-modal-overlay');
     const btnNewServer  = document.getElementById('btn-new-server');
     const btnCancel     = document.getElementById('modal-cancel');
@@ -12,7 +11,6 @@ const Modal = (() => {
       if (e.target === serverOverlay) _closeModal(serverOverlay);
     });
 
-    // Deploy target toggle
     const radios = document.querySelectorAll('[name="deploy-target"]');
     radios.forEach(r => r.addEventListener('change', () => {
       const isDocker = r.value === 'docker' && r.checked;
@@ -22,18 +20,15 @@ const Modal = (() => {
       if (fserver) fserver.style.display = isDocker ? 'none' : '';
     }));
 
-    // Backup interval toggle
     _toggleOnCheck('f-auto-backup',   'f-backup-interval-wrap');
     _toggleOnCheck('f-backup-cleanup','f-backup-ttl-wrap');
     _toggleOnCheck('f-docker-auto-backup',   'f-docker-backup-interval-wrap');
     _toggleOnCheck('f-docker-backup-cleanup','f-docker-backup-ttl-wrap');
 
-    // Dropzones
     _initDropzone('f-dropzone',     'f-modpack-file',    'dropzone-filename');
     _initDropzone('f-dropzone-jar', 'f-modloader-file',  'dropzone-jar-filename');
     _initDropzone('n-key-dropzone', 'n-key-file',        'n-key-filename');
 
-    // Create button
     if (btnCreate) btnCreate.addEventListener('click', _submit);
   }
 
@@ -79,19 +74,19 @@ const Modal = (() => {
     const isDocker = document.getElementById('f-target-docker')?.checked;
     const data = {
       name,
-      node:       nodeVal,
-      version:    document.getElementById('f-version')?.value    || '1.20.4',
-      modLoader:  document.getElementById('f-modloader')?.value  || 'Paper',
-      ram:        isDocker
-                    ? Number(document.getElementById('f-docker-ram')?.value  || 2048)
-                    : Number(document.getElementById('f-ram')?.value          || 2048),
-      cpu:        isDocker
-                    ? Number(document.getElementById('f-docker-cpu')?.value  || 2)
-                    : Number(document.getElementById('f-cpu')?.value          || 2),
-      port:       isDocker
-                    ? Number(document.getElementById('f-docker-port')?.value || 25565)
-                    : Number(document.getElementById('f-port')?.value         || 25565),
-      deployType: isDocker ? 'docker' : 'server'
+      nodeId:           nodeVal,
+      minecraftVersion: document.getElementById('f-version')?.value    || '1.20.4',
+      modLoader:       (document.getElementById('f-modloader')?.value  || 'paper').toLowerCase(),
+      ramMb:            isDocker
+                          ? Number(document.getElementById('f-docker-ram')?.value  || 2048)
+                          : Number(document.getElementById('f-ram')?.value          || 2048),
+      cpuCores:         isDocker
+                          ? Number(document.getElementById('f-docker-cpu')?.value  || 2)
+                          : Number(document.getElementById('f-cpu')?.value          || 2),
+      gamePort:         isDocker
+                          ? Number(document.getElementById('f-docker-port')?.value || 25565)
+                          : Number(document.getElementById('f-port')?.value         || 25565),
+      deployTarget:     isDocker ? 'docker' : 'screen'
     };
 
     ServersService.create(data).then(() => {

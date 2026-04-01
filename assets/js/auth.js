@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── Тема ────────────────────────────────────────────────────────────
   const saved = localStorage.getItem('theme') || 'dark';
   document.body.dataset.theme = saved;
   document.getElementById('themeSwitch')?.addEventListener('click', () => {
@@ -9,10 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('theme', next);
   });
 
-  // ── i18n ────────────────────────────────────────────────────────────
   I18n.init();
 
-  // ── Табы (Sign in / Register) ────────────────────────────────────────
   document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -21,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Метод регистрации (email / phone) ────────────────────────────────
   document.querySelectorAll('.method-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
@@ -32,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Показ/скрытие пароля ─────────────────────────────────────────────
   document.querySelectorAll('.eye-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const input = document.getElementById(btn.dataset.target);
@@ -41,12 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Сила пароля ──────────────────────────────────────────────────────
   document.getElementById('r-password')?.addEventListener('input', e => {
     _updateStrength(e.target.value);
   });
 
-  // ── Ввод кода подтверждения ──────────────────────────────────────────
   const cells = document.querySelectorAll('.code-cell');
   cells.forEach((cell, i) => {
     cell.addEventListener('input', () => {
@@ -71,7 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Кнопка "Войти" ───────────────────────────────────────────────────
   document.getElementById('btn-login')?.addEventListener('click', async () => {
     const identity = document.getElementById('l-identity').value.trim();
     const password = document.getElementById('l-password').value;
@@ -95,14 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
       Toast.show(I18n.t('auth.welcome'), 'success');
       setTimeout(() => { window.location.href = 'index.html'; }, 900);
     } catch (err) {
-      // Поля НЕ очищаем — пользователь может исправить
       Toast.show(err.message || I18n.t('auth.loginError'), 'error');
       btn.disabled = false;
       btn.textContent = I18n.t('auth.signIn');
     }
   });
 
-  // ── Кнопка "Создать аккаунт" ─────────────────────────────────────────
   document.getElementById('btn-send-code')?.addEventListener('click', async () => {
     const method    = document.querySelector('.method-btn.active')?.dataset.method || 'email';
     const email     = document.getElementById('r-email').value.trim();
@@ -139,14 +129,12 @@ document.addEventListener('DOMContentLoaded', () => {
       Toast.show(I18n.t('auth.registered'), 'success');
       setTimeout(() => { window.location.href = 'index.html'; }, 900);
     } catch (err) {
-      // Поля НЕ очищаем
       Toast.show(err.message || I18n.t('auth.registerError'), 'error');
       btn.disabled = false;
       btn.textContent = I18n.t('auth.sendCode');
     }
   });
 
-  // ── Восстановление пароля ─────────────────────────────────────────────
   document.getElementById('btn-reset')?.addEventListener('click', async () => {
     const identity = document.getElementById('f-identity').value.trim();
     if (!identity) { Toast.show(I18n.t('auth.fillAll'), 'error'); return; }
@@ -167,27 +155,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Навигация между формами ───────────────────────────────────────────
   document.getElementById('btn-forgot')?.addEventListener('click',       () => _showForm('tab-forgot'));
   document.getElementById('btn-back-login')?.addEventListener('click',   () => { _showForm('tab-login');    _setActiveTab('login');    });
   document.getElementById('btn-back-register')?.addEventListener('click',() => { _showForm('tab-register'); _setActiveTab('register'); });
 
-  // ── Таймер повторной отправки ─────────────────────────────────────────
   document.getElementById('btn-resend')?.addEventListener('click', () => {
     _startResendTimer(60);
     Toast.show(I18n.t('auth.codeSent'), 'success');
   });
 
-  // ── Авто-редирект если уже залогинен ─────────────────────────────────
   if (localStorage.getItem('token')) {
     window.location.href = 'index.html';
   }
 });
 
-// ── Состояние ────────────────────────────────────────────────────────────
 let _pendingReg = null;
 
-// ── Вспомогательные функции ──────────────────────────────────────────────
 function _showForm(id) {
   document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');

@@ -1,45 +1,25 @@
 const NodesService = (() => {
-  const KEY = 'mc_nodes';
+    async function getAll()        { return Api.get('/api/nodes'); }
+    async function getById(id)     { return Api.get(`/api/nodes/${id}`); }
+    async function create(data)    { return Api.post('/api/nodes', data); }
+    async function update(id, data){ return Api.patch(`/api/nodes/${id}`, data); }
+    async function remove(id)      { return Api.delete(`/api/nodes/${id}`); }
+    async function ping(id)        { return Api.post(`/api/nodes/${id}/check`); }
 
-  function _load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || _defaults(); }
-    catch { return _defaults(); }
-  }
+    async function getMembers(id) { return Api.get(`/api/nodes/${id}/members`); }
 
-  function _defaults() {
-    return [
-      { id: 1, name: 'ubuntu-node-01', ip: '192.168.1.10', sshPort: 22, sshUser: 'root', description: '', status: 'online' },
-      { id: 2, name: 'debian-node-02',  ip: '192.168.1.11', sshPort: 22, sshUser: 'root', description: '', status: 'offline' }
-    ];
-  }
+    async function addMember(nodeId, userId, role) {
+        return Api.post(`/api/nodes/${nodeId}/members`, { userId, role });
+    }
+    async function updateMemberRole(nodeId, userId, role) {
+        return Api.patch(`/api/nodes/${nodeId}/members/${userId}`, { role });
+    }
+    async function removeMember(nodeId, userId) {
+        return Api.delete(`/api/nodes/${nodeId}/members/${userId}`);
+    }
+    async function findByUsername(username) {
+        return Api.get(`/api/users/find?username=${encodeURIComponent(username)}`);
+    }
 
-  function _save(list) {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  }
-
-  function getAll() {
-    return Promise.resolve(_load());
-  }
-
-  function create(data) {
-    return new Promise(resolve => {
-      const list = _load();
-      const node = { id: Date.now(), status: 'connecting', ...data };
-      list.push(node);
-      _save(list);
-      setTimeout(() => {
-        const l = _load();
-        const n = l.find(x => x.id === node.id);
-        if (n) { n.status = 'online'; _save(l); NodesView.render(); }
-      }, 2000);
-      resolve(node);
-    });
-  }
-
-  function remove(id) {
-    _save(_load().filter(x => x.id !== id));
-    return Promise.resolve();
-  }
-
-  return { getAll, create, remove };
+    return { getAll, getById, create, update, remove, ping, getMembers, addMember, updateMemberRole, removeMember, findByUsername };
 })();

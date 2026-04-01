@@ -1,48 +1,23 @@
 const ServersService = (() => {
-  const KEY = 'mc_servers';
+    async function getAll()          { return Api.get('/api/mc-servers'); }
+    async function getById(id)       { return Api.get(`/api/mc-servers/${id}`); }
+    async function create(data)      { return Api.post('/api/mc-servers', data); }
+    async function update(id, data)  { return Api.patch(`/api/mc-servers/${id}`, data); }
+    async function remove(id)        { return Api.delete(`/api/mc-servers/${id}`); }
+    async function removeDevice(id)  { return Api.delete(`/api/mc-servers/${id}/device`); }
 
-  function _load() {
-    try { return JSON.parse(localStorage.getItem(KEY)) || _defaults(); }
-    catch { return _defaults(); }
-  }
+    async function start(id)         { return Api.post(`/api/mc-servers/${id}/start`); }
+    async function stop(id)          { return Api.post(`/api/mc-servers/${id}/stop`); }
+    async function restart(id)       { return Api.post(`/api/mc-servers/${id}/restart`); }
+    async function redeploy(id)      { return Api.post(`/api/mc-servers/${id}/redeploy`); }
 
-  function _defaults() {
-    return [
-      { id: 1, name: 'Survival-RU-1', version: '1.20.4', modLoader: 'Paper', node: 'ubuntu-node-01', ram: 4096, status: 'online' },
-      { id: 2, name: 'Modpack-FTB',   version: '1.18.2', modLoader: 'Forge', node: 'debian-node-02', ram: 6144, status: 'stopped' }
-    ];
-  }
+    async function sendRcon(id, command) {
+        return Api.post(`/api/mc-servers/${id}/rcon`, { command });
+    }
 
-  function _save(list) {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  }
+    async function getRecentLogs(id, lines = 200) {
+        return Api.get(`/api/mc-servers/${id}/logs/recent?lines=${lines}`);
+    }
 
-  function getAll() {
-    return Promise.resolve(_load());
-  }
-
-  function create(data) {
-    return new Promise(resolve => setTimeout(() => {
-      const list = _load();
-      const s = { id: Date.now(), status: 'stopped', ...data };
-      list.push(s);
-      _save(list);
-      resolve(s);
-    }, 800));
-  }
-
-  function updateStatus(id, status) {
-    return new Promise(resolve => setTimeout(() => {
-      const list = _load();
-      const s = list.find(x => x.id === id);
-      if (s) { s.status = status; _save(list); }
-      resolve(s);
-    }, 600));
-  }
-
-  function createBackup(id) {
-    return new Promise(resolve => setTimeout(() => resolve({ id, done: true }), 1500));
-  }
-
-  return { getAll, create, updateStatus, createBackup };
+    return { getAll, getById, create, update, remove, removeDevice, start, stop, restart, redeploy, sendRcon, getRecentLogs };
 })();
