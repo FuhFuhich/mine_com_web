@@ -22,7 +22,7 @@ const DashboardView = (() => {
         if (el) el.innerHTML = skeletonProfile();
 
         try {
-            _user = await Api.get('/api/users/me');
+            _user = await Api.get('/api/user/me');
         } catch {
             try { _user = await Api.get('/api/user/me'); } catch { _user = null; }
         }
@@ -53,7 +53,7 @@ const DashboardView = (() => {
         <div class="profile-hero">
             <div class="profile-avatar-wrap" id="profile-avatar-wrap" title="${I18n.t('profile.changeAvatar')}">
                 ${avatarContent}
-                <div class="profile-avatar-overlay"><span>📷</span></div>
+                <div class="profile-avatar-overlay"><span>⊕</span></div>
                 <input type="file" id="avatar-file-input" accept="image/*" style="display:none">
             </div>
             <div class="profile-meta">
@@ -112,13 +112,13 @@ const DashboardView = (() => {
 
         container.innerHTML = `
         <div class="summary-grid">
-            ${summaryCard(I18n.t('dash.nodes'), nodes.length, `${onlineNodes} ${I18n.t('dash.nodesOnline')}`, '🖥', onlineNodes > 0 ? 'green' : 'neutral')}
-            ${summaryCard(I18n.t('dash.mcServers'), servers.length, `${runningServers} ${I18n.t('dash.mcRunning')}`, '⚡', runningServers > 0 ? 'green' : 'neutral')}
-            ${summaryCard(I18n.t('dash.backups'), totalBackups, '', '💾', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.cpu'), avgCpu != null ? pct(avgCpu) : '—', '', '📊', cpuColor(avgCpu)) : summaryCard(I18n.t('dash.cpu'), '—', '', '📊', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.ram'), avgRamPct != null ? pct(avgRamPct) : '—', '', '🧠', cpuColor(avgRamPct)) : summaryCard(I18n.t('dash.ram'), '—', '', '🧠', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.disk'), avgDiskPct != null ? pct(avgDiskPct) : '—', '', '💽', cpuColor(avgDiskPct)) : summaryCard(I18n.t('dash.disk'), '—', '', '💽', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.docker'), totalDockerRunning, `${totalDockerTotal} ${I18n.t('metrics.containers')}`, '🐳', 'neutral') : ''}
+            ${summaryCard(I18n.t('dash.nodes'), nodes.length, `${onlineNodes} ${I18n.t('dash.nodesOnline')}`, '▦', onlineNodes > 0 ? 'green' : 'neutral')}
+            ${summaryCard(I18n.t('dash.mcServers'), servers.length, `${runningServers} ${I18n.t('dash.mcRunning')}`, '≋', runningServers > 0 ? 'green' : 'neutral')}
+            ${summaryCard(I18n.t('dash.backups'), totalBackups, '', '◫', 'neutral')}
+            ${metricsArr.length ? summaryCard(I18n.t('dash.cpu'), avgCpu != null ? pct(avgCpu) : '—', '', '◌', cpuColor(avgCpu)) : summaryCard(I18n.t('dash.cpu'), '—', '', '◌', 'neutral')}
+            ${metricsArr.length ? summaryCard(I18n.t('dash.ram'), avgRamPct != null ? pct(avgRamPct) : '—', '', '◧', cpuColor(avgRamPct)) : summaryCard(I18n.t('dash.ram'), '—', '', '◧', 'neutral')}
+            ${metricsArr.length ? summaryCard(I18n.t('dash.disk'), avgDiskPct != null ? pct(avgDiskPct) : '—', '', '◫', cpuColor(avgDiskPct)) : summaryCard(I18n.t('dash.disk'), '—', '', '◫', 'neutral')}
+            ${metricsArr.length ? summaryCard(I18n.t('dash.docker'), totalDockerRunning, `${totalDockerTotal} ${I18n.t('metrics.containers')}`, '◇', 'neutral') : ''}
         </div>
         ${rolesBlock(nodes)}
         ${quickLinks(nodes, servers)}`;
@@ -158,7 +158,7 @@ const DashboardView = (() => {
 
     function quickLinks(nodes, servers) {
         const problems = servers.filter(s => s.status === 'ERROR').map(s =>
-            `<div class="quick-link quick-link--error" data-view-nav="servers">⚠ ${s.name} — ${I18n.t('servers.status.ERROR')}</div>`
+            `<div class="quick-link quick-link--error" data-view-nav="servers">! ${s.name} — ${I18n.t('servers.status.ERROR')}</div>`
         );
         const offlineNodes = nodes.filter(n => n.status !== 'ONLINE' && !n.isActive).map(n =>
             `<div class="quick-link quick-link--warn" data-view-nav="nodes">○ ${n.name} — ${I18n.t('nodes.status.offline')}</div>`
@@ -177,7 +177,7 @@ const DashboardView = (() => {
         try {
             const fd = new FormData();
             fd.append('file', file);
-            const updated = await Api.upload('/api/users/me/avatar', fd);
+            const updated = await Api.upload('/api/user/me/avatar', fd);
             _user.avatarUrl = updated.avatarUrl;
             const existing = wrap.querySelector('img, .profile-avatar-letter');
             if (existing) existing.remove();
@@ -228,7 +228,7 @@ const DashboardView = (() => {
             const btn = document.getElementById('pe-save');
             btn.disabled = true;
             try {
-                const updated = await Api.patch('/api/users/me', {
+                const updated = await Api.patch('/api/user/me', {
                     username: document.getElementById('pe-username').value.trim() || null,
                     email:    document.getElementById('pe-email').value.trim() || null,
                     phoneNumber: document.getElementById('pe-phone').value.trim() || null,
@@ -251,7 +251,7 @@ const DashboardView = (() => {
             const btn = document.getElementById('pp-save');
             btn.disabled = true;
             try {
-                await Api.put('/api/users/me/password', {
+                await Api.put('/api/user/me/password', {
                     currentPassword: document.getElementById('pp-cur').value,
                     newPassword: newPwd,
                 });

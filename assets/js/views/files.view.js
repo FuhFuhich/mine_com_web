@@ -19,13 +19,13 @@ const FilesView = (() => {
         <div class="card">
             <div class="card-header">
                 <div class="card-title">${I18n.t('files.title')}</div>
-                <select id="files-server-select" class="csel-native" style="min-width:220px">
+                <select id="files-server-select" class="csel-native toolbar-select" style="min-width:200px">
                     <option value="">${I18n.t('files.selectServer')}</option>
                 </select>
             </div>
             <div id="files-body">
                 <div class="placeholder-empty">
-                    <div class="placeholder-icon">📂</div>
+                    <div class="placeholder-icon">▣</div>
                     <div class="placeholder-hint">${I18n.t('files.selectHint')}</div>
                 </div>
             </div>
@@ -64,7 +64,7 @@ const FilesView = (() => {
     function _showHint() {
         const body = document.getElementById('files-body');
         if (body) body.innerHTML = `<div class="placeholder-empty">
-            <div class="placeholder-icon">📂</div>
+            <div class="placeholder-icon">▣</div>
             <div class="placeholder-hint">${I18n.t('files.selectHint')}</div>
         </div>`;
     }
@@ -76,14 +76,14 @@ const FilesView = (() => {
         <div class="files-toolbar">
             <div class="files-breadcrumbs" id="files-breadcrumbs"></div>
             <div style="flex:1"></div>
-            <button class="action-btn action-btn--neutral" id="files-upload-btn">↑ ${I18n.t('files.upload')}</button>
-            <button class="action-btn action-btn--neutral" id="files-mkdir-btn">📁 ${I18n.t('files.newFolder')}</button>
+            <button class="action-btn action-btn--neutral" id="files-upload-btn">+ ${I18n.t('files.upload')}</button>
+            <button class="action-btn action-btn--neutral" id="files-mkdir-btn">+ ${I18n.t('files.newFolder')}</button>
             <input type="file" id="files-upload-input" style="display:none" multiple>
         </div>
         <div class="files-shortcuts" id="files-shortcuts">
             ${I18n.t('files.shortcuts')}:
             ${SHORTCUTS.map(s => `<button class="shortcut-btn" data-path="${s.path}">${s.label}</button>`).join('')}
-            <button class="action-btn action-btn--neutral" id="files-modpack-btn" style="margin-left:8px">📦 ${I18n.t('files.uploadModpack')}</button>
+            <button class="action-btn action-btn--neutral" id="files-modpack-btn" style="margin-left:8px">+ ${I18n.t('files.uploadModpack')}</button>
             <input type="file" id="files-modpack-input" style="display:none" accept=".zip">
         </div>
         <div class="files-list-wrap" id="files-list-wrap">
@@ -145,13 +145,13 @@ const FilesView = (() => {
                 btn.addEventListener('click', () => _handleFileAction(btn.dataset.fileAction, btn.dataset.path, btn.dataset.name))
             );
         } catch (err) {
-            list.innerHTML = `<div class="placeholder-empty"><div class="placeholder-icon">⚠</div><div class="placeholder-hint">${err.message}</div></div>`;
+            list.innerHTML = `<div class="placeholder-empty"><div class="placeholder-icon">!</div><div class="placeholder-hint">${err.message}</div></div>`;
         }
     }
 
     function _fileRow(item) {
         const isDir = item.type === 'directory';
-        const icon = isDir ? '📁' : _fileIcon(item.name);
+        const icon = isDir ? '▣' : _fileIcon(item.name);
         const size = item.sizeBytes != null ? _fmtBytes(item.sizeBytes) : (isDir ? '—' : '—');
         return `<div class="file-row" data-path="${item.path}" data-type="${item.type}" data-name="${item.name}">
             <div class="file-row-name" style="cursor:pointer;flex:1;display:flex;align-items:center;gap:8px">
@@ -167,8 +167,8 @@ const FilesView = (() => {
 
     function _fileIcon(name) {
         const ext = name.split('.').pop()?.toLowerCase();
-        const map = { jar: '☕', zip: '📦', json: '{}', yml: '⚙', yaml: '⚙', properties: '⚙', txt: '📄', log: '📜', sh: '⬛', toml: '⚙' };
-        return map[ext] || '📄';
+        const map = { jar: '◌', zip: '▤', json: '{}', yml: '≡', yaml: '≡', properties: '≡', txt: '▤', log: '≣', sh: '—', toml: '≡' };
+        return map[ext] || '▤';
     }
 
     function _renderBreadcrumbs(path) {
@@ -251,7 +251,7 @@ const FilesView = (() => {
             Toast.show(`${file.name} uploaded`, 'success');
             _navigate(_currentPath);
         } catch (err) { Toast.show(err.message, 'error'); }
-        finally { if (btn) { btn.disabled = false; btn.textContent = `📦 ${I18n.t('files.uploadModpack')}`; } }
+        finally { if (btn) { btn.disabled = false; btn.textContent = `▤ ${I18n.t('files.uploadModpack')}`; } }
     }
 
     async function _createFolder() {

@@ -9,7 +9,7 @@ const BackupsView = (() => {
             <div class="card-header">
                 <div class="card-title">${I18n.t('backups.title')}</div>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <select id="backups-server-select" class="csel-native" style="min-width:220px">
+                    <select id="backups-server-select" class="csel-native toolbar-select" style="min-width:200px">
                         <option value="">${I18n.t('backups.selectServer')}</option>
                     </select>
                     <button class="action-btn action-btn--start" id="backups-create-btn" disabled>${I18n.t('backups.create')}</button>
@@ -17,14 +17,14 @@ const BackupsView = (() => {
             </div>
             <div id="backups-body">
                 <div class="placeholder-empty">
-                    <div class="placeholder-icon">💾</div>
+                    <div class="placeholder-icon">◫</div>
                     <div class="placeholder-hint">${I18n.t('backups.selectHint')}</div>
                 </div>
             </div>
         </div>
         <div class="modal-overlay" id="backup-restore-overlay">
             <div class="modal" style="max-width:380px">
-                <div class="modal-title">⚠ ${I18n.t('confirm.title')}</div>
+                <div class="modal-title">! ${I18n.t('confirm.title')}</div>
                 <p id="backup-restore-msg" style="font-size:13px;opacity:0.8;margin:0 0 16px"></p>
                 <div class="modal-actions">
                     <button class="btn-cancel" id="backup-restore-cancel">${I18n.t('confirm.no')}</button>
@@ -34,7 +34,7 @@ const BackupsView = (() => {
         </div>
         <div class="modal-overlay" id="backup-delete-overlay">
             <div class="modal" style="max-width:380px">
-                <div class="modal-title">⚠ ${I18n.t('confirm.title')}</div>
+                <div class="modal-title">! ${I18n.t('confirm.title')}</div>
                 <p id="backup-delete-msg" style="font-size:13px;opacity:0.8;margin:0 0 16px"></p>
                 <div class="modal-actions">
                     <button class="btn-cancel" id="backup-delete-cancel">${I18n.t('confirm.no')}</button>
@@ -88,7 +88,7 @@ const BackupsView = (() => {
     function _showHint() {
         const body = document.getElementById('backups-body');
         if (body) body.innerHTML = `<div class="placeholder-empty">
-            <div class="placeholder-icon">💾</div>
+            <div class="placeholder-icon">◫</div>
             <div class="placeholder-hint">${I18n.t('backups.selectHint')}</div>
         </div>`;
     }
@@ -102,7 +102,7 @@ const BackupsView = (() => {
             _renderBackupsTable(backups || []);
         } catch (err) {
             body.innerHTML = `<div class="placeholder-empty">
-                <div class="placeholder-icon">⚠</div>
+                <div class="placeholder-icon">!</div>
                 <div class="placeholder-hint">${err.message}</div>
             </div>`;
         }
@@ -113,7 +113,7 @@ const BackupsView = (() => {
         if (!body) return;
         if (!backups.length) {
             body.innerHTML = `<div class="placeholder-empty">
-                <div class="placeholder-icon">💾</div>
+                <div class="placeholder-icon">◫</div>
                 <div class="placeholder-hint">${I18n.t('backups.empty')}</div>
             </div>`;
             return;

@@ -1,15 +1,24 @@
 const MetricsService = (() => {
     async function getNodeLatest(nodeId) {
-        return Api.get(`/api/nodes/${nodeId}/metrics/latest`);
+        return Api.get(`/api/nodes/${nodeId}/hardware`);
     }
-    async function getNodeTimeseries(nodeId, from, to, step = 60) {
-        return Api.get(`/api/nodes/${nodeId}/metrics/timeseries?from=${from}&to=${to}&step=${step}`);
+
+    async function scanNodeHardware(nodeId) {
+        return Api.post(`/api/nodes/${nodeId}/scan-hardware`);
     }
-    async function getMcServerLatest(mcServerId) {
-        return Api.get(`/api/mc-servers/${mcServerId}/metrics/latest`);
+
+    async function getServerLatest(mcServerId) {
+        return Api.get(`/api/metrics/${mcServerId}/latest`);
     }
-    async function getMcServerTimeseries(mcServerId, from, to, step = 60) {
-        return Api.get(`/api/mc-servers/${mcServerId}/metrics/timeseries?from=${from}&to=${to}&step=${step}`);
+
+    async function getServerHistory(mcServerId, hours = 24, page = 0, size = 100) {
+        return Api.get(`/api/metrics/${mcServerId}/history?hours=${hours}&page=${page}&size=${size}`);
     }
-    return { getNodeLatest, getNodeTimeseries, getMcServerLatest, getMcServerTimeseries };
+
+    return {
+        getNodeLatest,
+        scanNodeHardware,
+        getServerLatest,
+        getServerHistory
+    };
 })();

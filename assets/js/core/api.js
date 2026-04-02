@@ -1,5 +1,8 @@
 const Api = (() => {
-  const BASE = 'http://localhost:8080';
+  const BASE =
+    localStorage.getItem('apiBase') ||
+    window.__API_BASE__ ||
+    'http://localhost:8080';
 
   async function _request(method, path, body) {
     const token = localStorage.getItem('token');
@@ -14,15 +17,31 @@ const Api = (() => {
 
     if (res.status === 401) {
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       window.location.href = 'auth.html';
       return;
     }
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || res.statusText);
-    }
+
     if (res.status === 204) return null;
-    return res.json();
+
+    const contentType = res.headers.get('content-type') || '';
+
+    if (!res.ok) {
+      let err = {};
+      if (contentType.includes('application/json')) {
+        err = await res.json().catch(() => ({}));
+      } else {
+        const text = await res.text().catch(() => '');
+        err = { message: text || res.statusText };
+      }
+      throw new Error(err.message || err.error || res.statusText || 'Request failed');
+    }
+
+    if (contentType.includes('application/json')) {
+      return res.json();
+    }
+
+    return res.text();
   }
 
   return {
@@ -37,21 +56,40 @@ const Api = (() => {
       const token = localStorage.getItem('token');
       const headers = {};
       if (token) headers['Authorization'] = 'Bearer ' + token;
-      const res = await fetch('http://localhost:8080' + path, {
+
+      const res = await fetch(BASE + path, {
         method: 'POST',
         headers,
         body: formData
       });
+
       if (res.status === 401) {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         window.location.href = 'auth.html';
         return;
       }
+
+      if (res.status === 204) return null;
+
+      const contentType = res.headers.get('content-type') || '';
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || res.statusText);
+        let err = {};
+        if (contentType.includes('application/json')) {
+          err = await res.json().catch(() => ({}));
+        } else {
+          const text = await res.text().catch(() => '');
+          err = { message: text || res.statusText };
+        }
+        throw new Error(err.message || err.error || res.statusText || 'Upload failed');
       }
-      return res.json();
+
+      if (contentType.includes('application/json')) {
+        return res.json();
+      }
+
+      return res.text();
     }
-};
+  };
 })();

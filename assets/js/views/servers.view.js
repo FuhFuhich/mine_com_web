@@ -3,16 +3,25 @@ const ServersView = (() => {
     let _editingId = null;
     let _dockerOptions = [];
     let _bundles = [];
+    let _quickLogCache = new Map();
 
     /* ─── status ─── */
     const STATUS_CLASS = {
-        RUNNING: 'status-online', STOPPED: 'status-offline',
-        STARTING: 'status-connecting', STOPPING: 'status-connecting',
-        RESTARTING: 'status-connecting', DEPLOYING: 'status-connecting', ERROR: 'status-error',
+        RUNNING: 'status-online',
+        ONLINE: 'status-online',
+        STOPPED: 'status-offline',
+        OFFLINE: 'status-offline',
+        STARTING: 'status-connecting',
+        STOPPING: 'status-connecting',
+        RESTARTING: 'status-connecting',
+        DEPLOYING: 'status-connecting',
+        CREATING: 'status-connecting',
+        ERROR: 'status-error',
     };
     function statusPill(status) {
-        const cls = STATUS_CLASS[status] || 'status-offline';
-        const label = I18n.t(`servers.status.${status}`) || status;
+        const normalized = String(status || 'OFFLINE').toUpperCase();
+        const cls = STATUS_CLASS[normalized] || 'status-offline';
+        const label = I18n.t(`servers.status.${normalized}`) || normalized;
         return `<span class="status-pill ${cls}"><span class="status-dot"></span>${label}</span>`;
     }
 
@@ -28,7 +37,6 @@ const ServersView = (() => {
         if (!tbody) return;
         if (!list.length) {
             tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder-empty">
-                <div class="placeholder-icon">⚡</div>
                 <div class="placeholder-title">${I18n.t('servers.empty.title')}</div>
                 <div class="placeholder-hint">${I18n.t('servers.empty.hint')}</div>
             </div></td></tr>`;
@@ -37,8 +45,24 @@ const ServersView = (() => {
         tbody.innerHTML = list.map(s => `
             <tr data-server-id="${s.id}">
                 <td>
-                    <div class="node-name">${s.name}</div>
-                    <div class="node-desc">${s.deployTarget || ''} ${s.storageType ? `· ${s.storageType}` : ''}</div>
+                    <div class="server-name-row">
+                        <div class="server-name-main">
+                            <div class="node-name">${s.name}</div>
+                            <div class="node-desc">${s.deployTarget || ''} ${s.storageType ? `· ${s.storageType}` : ''}</div>
+                        </div>
+                        <div class="server-quicklogs-wrap">
+                            <button class="action-btn action-btn--neutral server-quicklogs-btn" data-quicklogs="${s.id}" title="${I18n.t('servers.action.logs')}">⋯</button>
+                            <div class="quick-log-popover" id="qlog-${s.id}">
+                                <div class="quick-log-header">
+                                    <div class="quick-log-title">${I18n.t('servers.action.logs')}</div>
+                                    <button class="quick-log-close" data-quicklogs-close="${s.id}" aria-label="Close">×</button>
+                                </div>
+                                <div class="quick-log-body">
+                                    <div class="quick-log-lines quick-log-lines--loading">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </td>
                 <td>
                     <div>${s.minecraftVersion || (s.bundleId || '—')}</div>
@@ -48,7 +72,7 @@ const ServersView = (() => {
                 <td>${s.gamePort || '—'}</td>
                 <td>
                     <div style="font-size:11px;white-space:nowrap">${s.ramMb ? `${s.ramMb} MB` : '—'} / ${s.cpuCores ? `${s.cpuCores} CPU` : '—'}</div>
-                    <div class="node-desc">${s.backupEnabled ? '💾 backup on' : ''}</div>
+                    <div class="node-desc">${s.backupEnabled ? 'backup on' : ''}</div>
                 </td>
                 <td class="server-status-cell" data-server-status="${s.id}">${statusPill(s.status)}</td>
                 <td class="server-actions-cell">
@@ -59,76 +83,167 @@ const ServersView = (() => {
         tbody.querySelectorAll('[data-action]').forEach(btn =>
             btn.addEventListener('click', () => _handleAction(btn.dataset.action, btn.dataset.id))
         );
-        _bindDropdowns(tbody);
+        _bindQuickLogs(tbody);
     }
 
     function _buildActions(s) {
         const id = s.id;
-        const busy = ['STARTING','STOPPING','RESTARTING','DEPLOYING'].includes(s.status);
+        const normalizedStatus = String(s.status || 'OFFLINE').toUpperCase();
+        const busy = ['STARTING','STOPPING','RESTARTING','DEPLOYING','CREATING'].includes(normalizedStatus);
         if (busy) {
-            return `<button class="action-btn action-btn--neutral" disabled style="opacity:0.6">${statusPill(s.status)}</button>`;
+            return `<button class="action-btn action-btn--neutral" disabled style="opacity:0.6">${statusPill(normalizedStatus)}</button>`;
         }
+
         const parts = [];
-        if (s.status === 'RUNNING') {
+
+        if (normalizedStatus === 'RUNNING' || normalizedStatus === 'ONLINE') {
             if (can(s,'stop'))    parts.push(`<button class="action-btn action-btn--stop" data-action="stop" data-id="${id}">${I18n.t('servers.action.stop')}</button>`);
             if (can(s,'restart')) parts.push(`<button class="action-btn action-btn--neutral" data-action="restart" data-id="${id}">${I18n.t('servers.action.restart')}</button>`);
-        } else if (s.status === 'STOPPED' || s.status === 'ERROR') {
+        } else if (normalizedStatus === 'STOPPED' || normalizedStatus === 'OFFLINE' || normalizedStatus === 'ERROR') {
             if (can(s,'start'))   parts.push(`<button class="action-btn action-btn--start" data-action="start" data-id="${id}">${I18n.t('servers.action.start')}</button>`);
         }
 
-        const menuItems = [];
-        if (can(s,'redeploy'))     menuItems.push({ action:'redeploy',     label: I18n.t('servers.action.redeploy') });
-        if (can(s,'backup'))       menuItems.push({ action:'backup',       label: I18n.t('servers.action.backup') });
-        if (can(s,'logs'))         menuItems.push({ action:'logs',         label: I18n.t('servers.action.logs') });
-        if (can(s,'metrics'))      menuItems.push({ action:'metrics',      label: I18n.t('servers.action.metrics') });
-        if (can(s,'files'))        menuItems.push({ action:'files',        label: I18n.t('servers.action.files') });
-        if (can(s,'configs'))      menuItems.push({ action:'configs',      label: I18n.t('servers.action.configs') });
-        menuItems.push({ action:'backups', label: I18n.t('servers.action.backups') });
-        if (can(s,'edit'))         menuItems.push({ action:'edit',         label: I18n.t('servers.action.edit') });
-        if (s.rconEnabled && can(s,'view')) menuItems.push({ action:'rcon', label: I18n.t('servers.action.rcon') });
-        if (can(s,'delete_device')) menuItems.push({ action:'delete_device', label: I18n.t('servers.action.deleteDevice'), danger: true });
-        if (can(s,'delete_full'))   menuItems.push({ action:'delete_full',  label: I18n.t('servers.action.deleteFull'),   danger: true });
+        if (can(s,'redeploy'))      parts.push(`<button class="action-btn action-btn--neutral" data-action="redeploy" data-id="${id}">${I18n.t('servers.action.redeploy')}</button>`);
+        if (can(s,'backup'))        parts.push(`<button class="action-btn action-btn--neutral" data-action="backup" data-id="${id}">${I18n.t('servers.action.backup')}</button>`);
+        if (can(s,'metrics'))       parts.push(`<button class="action-btn action-btn--neutral" data-action="metrics" data-id="${id}">${I18n.t('servers.action.metrics')}</button>`);
+        if (can(s,'files'))         parts.push(`<button class="action-btn action-btn--neutral" data-action="files" data-id="${id}">${I18n.t('servers.action.files')}</button>`);
+        if (can(s,'configs'))       parts.push(`<button class="action-btn action-btn--neutral" data-action="configs" data-id="${id}">${I18n.t('servers.action.configs')}</button>`);
+        parts.push(`<button class="action-btn action-btn--neutral" data-action="backups" data-id="${id}">${I18n.t('servers.action.backups')}</button>`);
+        if (can(s,'edit'))          parts.push(`<button class="action-btn action-btn--neutral" data-action="edit" data-id="${id}">${I18n.t('servers.action.edit')}</button>`);
+        if (s.rconEnabled && can(s,'view')) parts.push(`<button class="action-btn action-btn--neutral" data-action="rcon" data-id="${id}">${I18n.t('servers.action.rcon')}</button>`);
+        if (can(s,'delete_device')) parts.push(`<button class="action-btn action-btn--danger-soft" data-action="delete_device" data-id="${id}">${I18n.t('servers.action.deleteDevice')}</button>`);
+        if (can(s,'delete_full'))   parts.push(`<button class="action-btn action-btn--stop" data-action="delete_full" data-id="${id}">${I18n.t('servers.action.deleteFull')}</button>`);
 
-        if (menuItems.length) {
-            const menuHtml = menuItems.map(m =>
-                `<div class="action-menu-item ${m.danger ? 'action-menu-item--danger' : ''}" data-action="${m.action}" data-id="${id}">${m.label}</div>`
-            ).join('');
-            parts.push(`<div class="action-menu-wrap">
-                <button class="action-btn action-btn--neutral action-menu-toggle" data-id="${id}">···</button>
-                <div class="action-menu" id="amenu-${id}">${menuHtml}</div>
-            </div>`);
-        }
         return parts.join('');
     }
 
-    function _bindDropdowns(tbody) {
-        tbody.querySelectorAll('.action-menu-toggle').forEach(btn => {
-            btn.addEventListener('click', e => {
+    function _bindQuickLogs(tbody) {
+        tbody.querySelectorAll('.server-quicklogs-btn').forEach(btn => {
+            btn.addEventListener('click', async e => {
                 e.stopPropagation();
-                const menu = document.getElementById(`amenu-${btn.dataset.id}`);
-                const wasOpen = menu.classList.contains('open');
-                document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
-                if (!wasOpen) menu.classList.add('open');
+                await _toggleQuickLogs(btn.dataset.quicklogs, btn);
             });
         });
-        tbody.querySelectorAll('.action-menu-item').forEach(item =>
-            item.addEventListener('click', () => {
-                item.closest('.action-menu')?.classList.remove('open');
-                _handleAction(item.dataset.action, item.dataset.id);
-            })
-        );
+
+        tbody.querySelectorAll('[data-quicklogs-close]').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.stopPropagation();
+                _closeQuickLogs(btn.dataset.quicklogsClose);
+            });
+        });
+
+        tbody.querySelectorAll('.quick-log-popover').forEach(pop => {
+            pop.addEventListener('click', e => e.stopPropagation());
+        });
+    }
+
+    async function _toggleQuickLogs(serverId, btn) {
+        const popover = document.getElementById(`qlog-${serverId}`);
+        if (!popover) return;
+
+        const isOpen = popover.classList.contains('open');
+        document.querySelectorAll('.quick-log-popover.open').forEach(p => p.classList.remove('open'));
+        if (isOpen) return;
+
+        _positionQuickLogs(popover, btn);
+        popover.classList.add('open');
+
+        const linesEl = popover.querySelector('.quick-log-lines');
+        if (!linesEl) return;
+
+        linesEl.className = 'quick-log-lines quick-log-lines--loading';
+        linesEl.innerHTML = 'Loading...';
+
+        try {
+            let lines = _quickLogCache.get(serverId);
+            if (!lines) {
+                const recent = await ServersService.getRecentLogs(serverId, 40);
+                lines = _normalizeRecentLogs(recent);
+                _quickLogCache.set(serverId, lines);
+            }
+            _renderQuickLogs(linesEl, lines);
+            _positionQuickLogs(popover, btn);
+        } catch (err) {
+            linesEl.className = 'quick-log-lines quick-log-lines--error';
+            linesEl.textContent = err.message || 'Failed to load logs';
+            _positionQuickLogs(popover, btn);
+        }
+    }
+
+    function _positionQuickLogs(popover, btn) {
+        if (!popover || !btn) return;
+        const rect = btn.getBoundingClientRect();
+        const width = Math.min(540, window.innerWidth - 40);
+        let left = rect.left - 12;
+        left = Math.max(20, Math.min(left, window.innerWidth - width - 20));
+        let top = rect.bottom + 10;
+        const estimatedHeight = Math.min(420, window.innerHeight - 140) + 56;
+        if (top + estimatedHeight > window.innerHeight - 20) {
+            top = Math.max(20, rect.top - estimatedHeight - 10);
+        }
+        popover.style.width = `${width}px`;
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+    }
+
+    function _normalizeRecentLogs(recent) {
+        if (Array.isArray(recent)) {
+            return recent.map(entry => typeof entry === 'string' ? entry : (entry.line || entry.message || JSON.stringify(entry)));
+        }
+        if (recent?.lines && Array.isArray(recent.lines)) {
+            return recent.lines.map(entry => typeof entry === 'string' ? entry : (entry.line || entry.message || JSON.stringify(entry)));
+        }
+        if (typeof recent?.content === 'string') {
+            return recent.content.split('\n').filter(Boolean);
+        }
+        if (typeof recent === 'string') {
+            return recent.split('\n').filter(Boolean);
+        }
+        return [];
+    }
+
+    function _renderQuickLogs(container, lines) {
+        if (!lines.length) {
+            container.className = 'quick-log-lines quick-log-lines--empty';
+            container.textContent = 'No recent logs';
+            return;
+        }
+        container.className = 'quick-log-lines';
+        container.innerHTML = lines.slice(-30).map(line => `<div class="quick-log-line">${_escapeHtml(line)}</div>`).join('');
+    }
+
+    function _closeQuickLogs(serverId) {
+        document.getElementById(`qlog-${serverId}`)?.classList.remove('open');
+    }
+
+    function _escapeHtml(str) {
+        return (str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
     document.addEventListener('click', () =>
-        document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'))
+        document.querySelectorAll('.quick-log-popover.open').forEach(p => p.classList.remove('open'))
     );
+
+    window.addEventListener('resize', () => {
+        const open = document.querySelector('.quick-log-popover.open');
+        const btn = open ? document.querySelector(`[data-quicklogs="${open.id.replace('qlog-','')}"]`) : null;
+        if (open && btn) _positionQuickLogs(open, btn);
+    });
+
+    window.addEventListener('scroll', () => {
+        const open = document.querySelector('.quick-log-popover.open');
+        const btn = open ? document.querySelector(`[data-quicklogs="${open.id.replace('qlog-','')}"]`) : null;
+        if (open && btn) _positionQuickLogs(open, btn);
+    }, true);
 
     /* ─── actions ─── */
     async function _handleAction(action, id) {
         const s = _servers.find(x => String(x.id) === String(id));
 
         if (action === 'edit') { _openEditModal(id); return; }
-        if (action === 'logs')    { Router.navigate('logs');    setTimeout(() => _preselectServer('logs-server-select', id), 80); return; }
         if (action === 'metrics') { Router.navigate('metrics'); setTimeout(() => _preselectServer('metrics-mc-select', id), 80); return; }
         if (action === 'files')   { Router.navigate('files');   setTimeout(() => _preselectServer('files-server-select', id), 80); return; }
         if (action === 'configs') { Router.navigate('configs'); setTimeout(() => _preselectServer('configs-server-select', id), 80); return; }
@@ -184,7 +299,6 @@ const ServersView = (() => {
             actCell.querySelectorAll('[data-action]').forEach(btn =>
                 btn.addEventListener('click', () => _handleAction(btn.dataset.action, btn.dataset.id))
             );
-            _bindDropdowns(actCell.closest('tbody') || actCell);
         }
     }
 
@@ -226,8 +340,12 @@ const ServersView = (() => {
         document.getElementById('mc-modal-title').textContent = I18n.t('modal.createServer');
         document.getElementById('mc-modal-submit').textContent = I18n.t('modal.create');
         document.getElementById('mc-server-form').reset();
-        await _loadCatalog();
-        _syncDeployTarget();
+
+        const dockerRadio = document.querySelector('input[name="mc-deploy-target"][value="docker"]');
+        if (dockerRadio) dockerRadio.checked = true;
+
+        await _loadCatalog('docker');
+        await _syncDeployTarget();
         document.getElementById('mc-modal-overlay').classList.add('active');
     }
 
@@ -237,7 +355,7 @@ const ServersView = (() => {
         _editingId = id;
         document.getElementById('mc-modal-title').textContent = I18n.t('modal.editServer');
         document.getElementById('mc-modal-submit').textContent = I18n.t('modal.save');
-        await _loadCatalog();
+        await _loadCatalog((s.deployTarget || 'docker') === 'screen' ? 'baremetal' : (s.deployTarget || 'docker'));
 
         document.getElementById('f-name').value = s.name || '';
         document.getElementById('f-node').value = s.nodeId || '';
@@ -260,8 +378,9 @@ const ServersView = (() => {
         document.getElementById('f-rcon-port').value = s.rconPort || 25566;
         document.getElementById('f-rcon-password').value = s.rconPassword || '';
 
-        const target = s.deployTarget || 'docker';
-        document.querySelector(`input[name="mc-deploy-target"][value="${target}"]`).checked = true;
+        const target = (s.deployTarget || 'docker') === 'screen' ? 'baremetal' : (s.deployTarget || 'docker');
+        const targetRadio = document.querySelector(`input[name="mc-deploy-target"][value="${target}"]`);
+        if (targetRadio) targetRadio.checked = true;
 
         if (target === 'baremetal' && s.bundleId) {
             document.getElementById('f-bundle').value = s.bundleId;
@@ -270,7 +389,7 @@ const ServersView = (() => {
             _onVersionChange(s.minecraftVersion, s.modLoader, s.modLoaderVersion);
         }
 
-        _syncDeployTarget();
+        await _syncDeployTarget();
         document.getElementById('mc-modal-overlay').classList.add('active');
     }
 
@@ -279,27 +398,36 @@ const ServersView = (() => {
         _editingId = null;
     }
 
-    async function _loadCatalog() {
-        try { _bundles = await CatalogService.getBaremetalBundles(); } catch { _bundles = []; }
-        try { _dockerOptions = await CatalogService.getDockerOptions(); } catch { _dockerOptions = []; }
-
+    async function _loadCatalog(target = 'docker') {
         const bundleSel = document.getElementById('f-bundle');
+        const verSel = document.getElementById('f-mc-version');
+        const loaderSel = document.getElementById('f-mod-loader');
+        const loaderVerSel = document.getElementById('f-mod-loader-version');
+
+        if (target === 'docker') {
+            try { _dockerOptions = await CatalogService.getDockerOptions(); } catch { _dockerOptions = []; }
+
+            const versions = CatalogService.getUniqueVersions(_dockerOptions);
+            verSel.innerHTML = `<option value="">${I18n.t('modal.selectVersion')}</option>` +
+                versions.map(v => `<option value="${v}">${v}</option>`).join('');
+
+            loaderSel.innerHTML = `<option value="">${I18n.t('modal.selectLoader')}</option>`;
+            loaderVerSel.innerHTML = `<option value="">${I18n.t('modal.selectLoaderVersion')}</option>`;
+            bundleSel.innerHTML = `<option value="">${I18n.t('modal.selectBundle')}</option>`;
+            return;
+        }
+
+        try { _bundles = await CatalogService.getBaremetalBundles(); } catch { _bundles = []; }
+
         bundleSel.innerHTML = `<option value="">${I18n.t('modal.selectBundle')}</option>` +
             _bundles.map(b => `<option value="${b.bundleId}">${b.bundleId}</option>`).join('');
-
-        const versions = CatalogService.getUniqueVersions(_dockerOptions);
-        const verSel = document.getElementById('f-mc-version');
-        verSel.innerHTML = `<option value="">${I18n.t('modal.selectVersion')}</option>` +
-            versions.map(v => `<option value="${v}">${v}</option>`).join('');
-
-        document.getElementById('f-mod-loader').innerHTML = `<option value="">${I18n.t('modal.selectLoader')}</option>`;
-        document.getElementById('f-mod-loader-version').innerHTML = `<option value="">${I18n.t('modal.selectLoaderVersion')}</option>`;
     }
 
-    function _syncDeployTarget() {
+    async function _syncDeployTarget() {
         const target = document.querySelector('input[name="mc-deploy-target"]:checked')?.value || 'docker';
         document.getElementById('mc-docker-fields').style.display = target === 'docker' ? '' : 'none';
         document.getElementById('mc-baremetal-fields').style.display = target === 'baremetal' ? '' : 'none';
+        await _loadCatalog(target);
         _syncAllocateAll();
         _syncBackupEnabled();
         _syncRcon();
@@ -340,9 +468,10 @@ const ServersView = (() => {
     }
 
     async function _submitModal() {
-        const name   = document.getElementById('f-name').value.trim();
+        const name = document.getElementById('f-name').value.trim();
         const nodeId = document.getElementById('f-node').value;
-        const target = document.querySelector('input[name="mc-deploy-target"]:checked')?.value || 'docker';
+        const uiTarget = document.querySelector('input[name="mc-deploy-target"]:checked')?.value || 'docker';
+        const target = uiTarget === 'baremetal' ? 'screen' : uiTarget;
 
         if (!name || !nodeId) { Toast.show(I18n.t('auth.fillAll'), 'error'); return; }
 
@@ -376,7 +505,7 @@ const ServersView = (() => {
             } : {}),
         };
 
-        if (target === 'docker') {
+        if (uiTarget === 'docker') {
             payload.minecraftVersion  = document.getElementById('f-mc-version').value;
             payload.modLoader         = document.getElementById('f-mod-loader').value;
             payload.modLoaderVersion  = document.getElementById('f-mod-loader-version').value;
@@ -398,9 +527,15 @@ const ServersView = (() => {
             } else {
                 const created = await ServersService.create(payload);
                 Toast.show(`${name} created`, 'success');
+                try {
+                    await ServersService.deploy(created.id);
+                    Toast.show(`${name} deploy started`, 'info');
+                } catch (deployErr) {
+                    Toast.show(deployErr.message || 'Deploy failed', 'error');
+                }
             }
             _closeModal();
-            render();
+            await render();
         } catch (err) {
             Toast.show(err.message, 'error');
         } finally {
@@ -417,7 +552,6 @@ const ServersView = (() => {
         } catch (err) {
             const tbody = document.getElementById('servers-tbody');
             if (tbody) tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder-empty">
-                <div class="placeholder-icon">⚠</div>
                 <div class="placeholder-title">Error</div>
                 <div class="placeholder-hint">${err.message}</div>
             </div></td></tr>`;
@@ -434,7 +568,7 @@ const ServersView = (() => {
         });
 
         document.querySelectorAll('input[name="mc-deploy-target"]').forEach(r =>
-            r.addEventListener('change', _syncDeployTarget)
+            r.addEventListener('change', () => { _syncDeployTarget(); })
         );
         document.getElementById('f-allocate-all')?.addEventListener('change', _syncAllocateAll);
         document.getElementById('f-backup-enabled')?.addEventListener('change', _syncBackupEnabled);
@@ -493,7 +627,7 @@ const ServersView = (() => {
         if (log) {
             const entry = document.createElement('div');
             entry.className = 'rcon-entry';
-            entry.innerHTML = `<span class="rcon-cmd">▶ ${cmd}</span>`;
+            entry.innerHTML = `<span class="rcon-cmd">> ${cmd}</span>`;
             log.appendChild(entry);
             try {
                 const res = await ServersService.sendRcon(serverId, cmd);

@@ -2,19 +2,19 @@ const FilesService = (() => {
     function encPath(p) { return encodeURIComponent(p); }
 
     async function getTree(mcServerId, path = '/') {
-        return Api.get(`/api/mc-servers/${mcServerId}/files/tree?path=${encPath(path)}`);
+        return Api.get(`/api/mc-servers/${mcServerId}/fs/list`);
     }
     async function getContent(mcServerId, path) {
-        return Api.get(`/api/mc-servers/${mcServerId}/files/content?path=${encPath(path)}`);
+        return Api.get(`/api/mc-servers/${mcServerId}/fs/read`);
     }
     async function saveContent(mcServerId, path, content) {
-        return Api.put(`/api/mc-servers/${mcServerId}/files/content`, { path, content });
+        return Api.put(`/api/mc-servers/${mcServerId}/fs/write`, { path, content });
     }
     async function mkdir(mcServerId, path) {
-        return Api.post(`/api/mc-servers/${mcServerId}/files/mkdir`, { path });
+        return Api.post(`/api/mc-servers/${mcServerId}/fs/mkdir`, { path });
     }
     async function remove(mcServerId, path) {
-        return Api.delete(`/api/mc-servers/${mcServerId}/files?path=${encPath(path)}`);
+        return Api.delete(`/api/mc-servers/${mcServerId}/files/delete`);
     }
     async function upload(mcServerId, targetPath, file) {
         const fd = new FormData();

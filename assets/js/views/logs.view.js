@@ -15,7 +15,7 @@ const LogsView = (() => {
                 <div class="card-title" data-i18n="logs.title">${I18n.t('logs.title')}</div>
             </div>
             <div class="logs-toolbar">
-                <select id="logs-server-select" class="csel-native" style="min-width:200px">
+                <select id="logs-server-select" class="csel-native toolbar-select" style="min-width:190px">
                     <option value="">${I18n.t('logs.selectServer')}</option>
                 </select>
                 <button class="action-btn action-btn--start" id="logs-connect-btn" disabled>${I18n.t('logs.connect')}</button>
@@ -79,11 +79,21 @@ const LogsView = (() => {
 
         try {
             const recent = await ServersService.getRecentLogs(_currentServerId, 200);
-            const lines = Array.isArray(recent) ? recent : (recent?.lines || recent?.content ? (recent.content || '').split('\n').map(line => ({ line, level: _detectLevel(line), timestamp: '' })) : []);
+            const lines = _normalizeRecentLogs(recent);
             for (const entry of lines) {
-                _pushLine(entry);
+                if (typeof entry === 'string') {
+                    _pushLine({ line: entry, level: _detectLevel(entry), timestamp: '' });
+                } else {
+                    _pushLine(entry);
+                }
             }
-        } catch { /* no recent logs – ok */ }
+        } catch (err) {
+            const viewer = document.getElementById('log-viewer');
+            if (viewer) {
+                viewer.innerHTML = `<div class="log-line log-line--error">${_escHtml(err.message || 'Не удалось загрузить последние логи')}</div>`;
+            }
+            Toast.show(err.message || 'Не удалось загрузить последние логи', 'error');
+        }
 
         _connectWs();
     }
@@ -219,6 +229,28 @@ const LogsView = (() => {
 
     function _escHtml(str) {
         return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function _normalizeRecentLogs(recent) {
+        if (Array.isArray(recent)) {
+            return recent;
+        }
+        if (recent?.lines && Array.isArray(recent.lines)) {
+            return recent.lines;
+        }
+        if (typeof recent?.content === 'string') {
+            return recent.content
+                .split('\n')
+                .filter(Boolean)
+                .map(line => ({ line, level: _detectLevel(line), timestamp: '' }));
+        }
+        if (typeof recent === 'string') {
+            return recent
+                .split('\n')
+                .filter(Boolean)
+                .map(line => ({ line, level: _detectLevel(line), timestamp: '' }));
+        }
+        return [];
     }
 
     return { render };

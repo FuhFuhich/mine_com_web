@@ -24,13 +24,13 @@ const ConfigsView = (() => {
         <div class="card">
             <div class="card-header">
                 <div class="card-title">${I18n.t('configs.title')}</div>
-                <select id="configs-server-select" class="csel-native" style="min-width:220px">
+                <select id="configs-server-select" class="csel-native toolbar-select" style="min-width:200px">
                     <option value="">${I18n.t('configs.selectServer')}</option>
                 </select>
             </div>
             <div id="configs-body">
                 <div class="placeholder-empty">
-                    <div class="placeholder-icon">📝</div>
+                    <div class="placeholder-icon">✎</div>
                     <div class="placeholder-hint">${I18n.t('configs.selectHint')}</div>
                 </div>
             </div>
@@ -57,7 +57,7 @@ const ConfigsView = (() => {
     function _showHint() {
         const body = document.getElementById('configs-body');
         if (body) body.innerHTML = `<div class="placeholder-empty">
-            <div class="placeholder-icon">📝</div>
+            <div class="placeholder-icon">✎</div>
             <div class="placeholder-hint">${I18n.t('configs.selectHint')}</div>
         </div>`;
     }
@@ -72,7 +72,7 @@ const ConfigsView = (() => {
                 <ul class="configs-file-list" id="configs-common-list">
                     ${COMMON_CONFIGS.map(f =>
                         `<li class="config-file-item" data-path="${f.path}">
-                            ${f.warn ? '⚠' : '📄'} ${f.label}
+                            ${f.warn ? '!' : '▤'} ${f.label}
                         </li>`
                     ).join('')}
                 </ul>
@@ -88,7 +88,7 @@ const ConfigsView = (() => {
                     <button class="action-btn action-btn--neutral" id="configs-restart-btn">${I18n.t('configs.restart')}</button>
                 </div>
                 <div id="configs-warning" class="configs-warning" style="display:none">
-                    ⚠ ${I18n.t('configs.warningFile')}
+                    ! ${I18n.t('configs.warningFile')}
                 </div>
                 <textarea id="configs-editor" class="configs-editor" spellcheck="false" placeholder="${I18n.t('configs.selectFile')}"></textarea>
             </div>
@@ -115,7 +115,7 @@ const ConfigsView = (() => {
             if (!files.length) { area.textContent = I18n.t('configs.noFiles'); return; }
             area.innerHTML = files.map(f =>
                 `<div class="config-file-item config-file-item--tree" data-path="${f.path}" data-warn="false" style="cursor:pointer;padding:3px 8px">
-                    ${f.type === 'directory' ? '📁' : '📄'} ${f.name}
+                    ${f.type === 'directory' ? '▣' : '▤'} ${f.name}
                 </div>`
             ).join('');
             area.querySelectorAll('.config-file-item--tree').forEach(item =>

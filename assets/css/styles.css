@@ -166,7 +166,11 @@ body[data-theme="light"] .card { background: #ffffff; border: 1px solid rgba(0,0
 }
 .badge-pill:hover { background: rgba(0,230,118,0.22); }
 
-.table-card { margin-top: 4px; }
+.table-card { margin-top: 4px; overflow: visible; }
+.table-card .table,
+.table-card tbody,
+.table-card tr,
+.table-card td { overflow: visible; }
 .table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .table th, .table td { padding: 7px 6px; text-align: left; }
 .table th { opacity: 0.7; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.08); }
@@ -553,9 +557,14 @@ body[data-theme="light"] .ip-value { background: rgba(0,0,0,0.05); color: #007a3
   opacity: 0.5;
 }
 .placeholder-icon {
-  font-size: 40px;
+  font-size: 34px;
   margin-bottom: 6px;
-  filter: grayscale(0.3);
+  color: rgba(255,255,255,0.42);
+  filter: none;
+  font-weight: 600;
+}
+body[data-theme="light"] .placeholder-icon {
+  color: rgba(0,0,0,0.34);
 }
 .placeholder-title {
   font-size: 15px;
@@ -1258,3 +1267,194 @@ textarea:focus { border-color: var(--accent-green); }
 /* ── Deploy fields light theme ─────────────────────────────────── */
 body[data-theme="light"] .deploy-fields { border-color: rgba(0,0,0,0.07); background: rgba(0,0,0,0.01); }
 
+
+
+/* ── Compact toolbar select (metrics/logs/configs/files/backups) ─ */
+.toolbar-select.csel-native,
+.toolbar-select select,
+.metrics-selector .toolbar-select {
+  min-height: 34px;
+  height: 34px;
+  padding: 6px 32px 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.018));
+  color: rgba(255,255,255,0.88);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  font-size: 12px;
+}
+.toolbar-select.csel-native:hover,
+.toolbar-select select:hover,
+.metrics-selector .toolbar-select:hover {
+  border-color: rgba(255,255,255,0.11);
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.024));
+}
+body[data-theme="light"] .toolbar-select.csel-native,
+body[data-theme="light"] .toolbar-select select,
+body[data-theme="light"] .metrics-selector .toolbar-select {
+  border-color: rgba(0,0,0,0.08);
+  background: linear-gradient(180deg, #f4f4f4, #ececec);
+  color: #222;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.92);
+}
+body[data-theme="light"] .toolbar-select.csel-native:hover,
+body[data-theme="light"] .toolbar-select select:hover,
+body[data-theme="light"] .metrics-selector .toolbar-select:hover {
+  border-color: rgba(0,0,0,0.14);
+  background: linear-gradient(180deg, #f8f8f8, #eeeeee);
+}
+.logs-toolbar .toolbar-select,
+.card-header .toolbar-select {
+  min-width: 210px;
+}
+/* ── Server row layout / actions ─────────────────────────────── */
+.server-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.server-name-main {
+  min-width: 0;
+  flex: 1;
+}
+.server-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  min-width: 360px;
+}
+.server-actions-cell .action-btn {
+  padding-inline: 8px;
+}
+.server-actions-cell .action-btn {
+  margin-right: 0;
+}
+.action-btn--danger-soft {
+  background: rgba(255,120,120,0.09);
+  border-color: rgba(255,120,120,0.32);
+  color: #ffc1c1;
+}
+body[data-theme="light"] .action-btn--danger-soft {
+  background: rgba(220,50,50,0.06);
+  border-color: rgba(220,50,50,0.18);
+  color: #b3261e;
+}
+.action-btn--danger-soft:hover {
+  background: rgba(255,120,120,0.16);
+}
+
+/* ── Quick recent logs popover ───────────────────────────────── */
+.server-quicklogs-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.server-quicklogs-btn {
+  min-width: 34px;
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  line-height: 1;
+  font-size: 15px;
+}
+.quick-log-popover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: min(540px, calc(100vw - 40px));
+  border-radius: 14px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top left;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  z-index: 1400;
+  box-shadow: 0 22px 40px rgba(0,0,0,0.45);
+}
+.quick-log-popover.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+body[data-theme="dark"] .quick-log-popover {
+  background: #090909;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+body[data-theme="light"] .quick-log-popover {
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+.quick-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+body[data-theme="light"] .quick-log-header {
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+.quick-log-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.quick-log-close {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.72;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.quick-log-body {
+  padding: 0;
+}
+.quick-log-lines {
+  max-height: min(420px, calc(100vh - 140px));
+  overflow: auto;
+  padding: 10px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.quick-log-line {
+  padding: 2px 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+body[data-theme="dark"] .quick-log-line {
+  color: rgba(255,255,255,0.84);
+}
+body[data-theme="light"] .quick-log-line {
+  color: #1f1f1f;
+}
+.quick-log-lines--loading,
+.quick-log-lines--empty,
+.quick-log-lines--error {
+  padding: 18px 14px;
+  font-family: inherit;
+  font-size: 12px;
+}
+body[data-theme="dark"] .quick-log-lines--loading,
+body[data-theme="dark"] .quick-log-lines--empty {
+  color: rgba(255,255,255,0.62);
+}
+body[data-theme="light"] .quick-log-lines--loading,
+body[data-theme="light"] .quick-log-lines--empty {
+  color: rgba(0,0,0,0.62);
+}
+.quick-log-lines--error {
+  color: #ff9d9d;
+}
+
+.summary-card-icon,
+.nav-link-icon,
+.profile-avatar-overlay span,
+.ip-reveal-btn {
+  filter: grayscale(1) saturate(0);
+}

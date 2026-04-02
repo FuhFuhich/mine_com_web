@@ -14,7 +14,7 @@ const NodesView = (() => {
     function ipMasked(ip) {
         return `<span class="ip-masked" data-ip="${ip}">
             <span class="ip-dots">••••</span>
-            <button class="ip-reveal-btn" title="${I18n.t('nodes.table.clickReveal')}">👁</button>
+            <button class="ip-reveal-btn" title="${I18n.t('nodes.table.clickReveal')}">◉</button>
         </span>`;
     }
 
@@ -62,7 +62,7 @@ const NodesView = (() => {
         if (!tbody) return;
         if (!nodes.length) {
             tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder-empty">
-                <div class="placeholder-icon">🖥</div>
+                <div class="placeholder-icon">▦</div>
                 <div class="placeholder-title">${I18n.t('nodes.empty.title')}</div>
                 <div class="placeholder-hint">${I18n.t('nodes.empty.hint')}</div>
             </div></td></tr>`;
@@ -120,7 +120,7 @@ const NodesView = (() => {
         const tbody = document.getElementById('nodes-tbody');
         if (!tbody) return;
         tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder-empty">
-            <div class="placeholder-icon">⚠</div>
+            <div class="placeholder-icon">!</div>
             <div class="placeholder-title">Error</div>
             <div class="placeholder-hint">${msg}</div>
         </div></td></tr>`;
