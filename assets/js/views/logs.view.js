@@ -5,12 +5,11 @@ const LogsView = (() => {
     let _filterText = '';
     let _allLines = [];
 
-    /* ─── render shell ─── */
     function render() {
         const container = document.getElementById('logs-container');
         if (!container) return;
         container.innerHTML = `
-        <div class="card table-card">
+        <div class="card table-card logs-card">
             <div class="card-header">
                 <div class="card-title" data-i18n="logs.title">${I18n.t('logs.title')}</div>
             </div>
@@ -19,7 +18,6 @@ const LogsView = (() => {
                     <option value="">${I18n.t('logs.selectServer')}</option>
                 </select>
                 <button class="action-btn action-btn--start" id="logs-connect-btn" disabled>${I18n.t('logs.connect')}</button>
-                <span class="logs-status-badge" id="logs-status"></span>
                 <input type="text" id="logs-filter" class="logs-filter-input" placeholder="${I18n.t('logs.filter')}" style="flex:1;min-width:120px">
                 <label class="check-option" style="white-space:nowrap">
                     <input type="checkbox" id="logs-autoscroll" checked> ${I18n.t('logs.autoScroll')}
@@ -47,14 +45,19 @@ const LogsView = (() => {
         document.getElementById('logs-server-select')?.addEventListener('change', e => {
             _currentServerId = e.target.value || null;
             document.getElementById('logs-connect-btn').disabled = !_currentServerId;
+            _clearViewer();
             if (!_currentServerId) _disconnect();
         });
-        document.getElementById('logs-connect-btn')?.addEventListener('click', () => {
-            if (_stompClient && _stompClient.connected) _disconnect();
-            else _connect();
+        document.getElementById('logs-connect-btn')?.addEventListener('click', async () => {
+            if (_stompClient && _stompClient.connected) {
+                _disconnect();
+                return;
+            }
+            await _connect();
         });
         document.getElementById('logs-autoscroll')?.addEventListener('change', e => {
             _autoScroll = e.target.checked;
+            if (_autoScroll) _scrollToBottom();
         });
         document.getElementById('logs-filter')?.addEventListener('input', e => {
             _filterText = e.target.value.toLowerCase();
@@ -75,10 +78,12 @@ const LogsView = (() => {
         if (!_currentServerId) return;
         const btn = document.getElementById('logs-connect-btn');
         if (btn) btn.textContent = I18n.t('logs.connecting');
-        _setStatus('connecting');
+
+        _disconnectTransportOnly();
+        _clearViewer();
 
         try {
-            const recent = await ServersService.getRecentLogs(_currentServerId, 200);
+            const recent = await Api.get(`/api/console/${_currentServerId}/log?lines=1000`);
             const lines = _normalizeRecentLogs(recent);
             for (const entry of lines) {
                 if (typeof entry === 'string') {
@@ -87,6 +92,7 @@ const LogsView = (() => {
                     _pushLine(entry);
                 }
             }
+            _scrollToBottom();
         } catch (err) {
             const viewer = document.getElementById('log-viewer');
             if (viewer) {
@@ -100,83 +106,77 @@ const LogsView = (() => {
 
     function _connectWs() {
         const token = localStorage.getItem('token');
-        const wsBase = Api.getBase().replace(/^http/, 'ws');
-
-        if (typeof StompJs === 'undefined') {
-            _connectRawWs(wsBase, token);
+        if (typeof SockJS === 'undefined' || typeof StompJs === 'undefined') {
+            const btn = document.getElementById('logs-connect-btn');
+            if (btn) btn.textContent = I18n.t('logs.connect');
             return;
         }
 
+        const socket = new SockJS(`${Api.getBase()}/ws`);
         _stompClient = new StompJs.Client({
-            brokerURL: `${wsBase}/ws${token ? '?token=' + token : ''}`,
+            webSocketFactory: () => socket,
             reconnectDelay: 5000,
-            onConnect: () => {
-                _setStatus('connected');
+            connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+            onConnect: async () => {
                 const btn = document.getElementById('logs-connect-btn');
                 if (btn) btn.textContent = I18n.t('logs.disconnect');
 
-                _stompClient.subscribe(`/topic/mc-servers/${_currentServerId}/logs`, msg => {
+                _stompClient.subscribe(`/topic/console/${_currentServerId}`, msg => {
                     try {
                         const data = JSON.parse(msg.body);
                         _pushLine(data);
-                    } catch { _pushRaw(msg.body); }
+                    } catch {
+                        _pushRaw(msg.body);
+                    }
                 });
 
-                _stompClient.publish({ destination: `/app/mc-servers/${_currentServerId}/logs/start` });
+                try {
+                    await Api.post(`/api/console/${_currentServerId}/start`);
+                } catch {
+                    /* non-fatal */
+                }
             },
             onDisconnect: () => {
-                _setStatus('disconnected');
                 const btn = document.getElementById('logs-connect-btn');
                 if (btn) btn.textContent = I18n.t('logs.connect');
             },
             onStompError: frame => {
-                _setStatus('disconnected');
+                const btn = document.getElementById('logs-connect-btn');
+                if (btn) btn.textContent = I18n.t('logs.connect');
                 Toast.show('WebSocket error: ' + (frame.headers?.message || ''), 'error');
             },
         });
         _stompClient.activate();
     }
 
-    function _connectRawWs(wsBase, token) {
-        const ws = new WebSocket(`${wsBase}/ws${token ? '?token=' + token : ''}`);
-        ws.onopen = () => {
-            _setStatus('connected');
-            const btn = document.getElementById('logs-connect-btn');
-            if (btn) btn.textContent = I18n.t('logs.disconnect');
-            _stompClient = { connected: true, ws, deactivate() { ws.close(); } };
-        };
-        ws.onmessage = e => {
-            try {
-                const data = JSON.parse(e.data);
-                if (data.line || data.message) _pushLine(data);
-            } catch { _pushRaw(e.data); }
-        };
-        ws.onclose = () => {
-            _setStatus('disconnected');
-            const btn = document.getElementById('logs-connect-btn');
-            if (btn) btn.textContent = I18n.t('logs.connect');
-            _stompClient = null;
-        };
-        ws.onerror = () => { _setStatus('disconnected'); Toast.show('WebSocket error', 'error'); };
-    }
-
-    function _disconnect() {
+    function _disconnectTransportOnly() {
         if (_stompClient) {
-            if (_stompClient.connected && _stompClient.publish) {
-                try { _stompClient.publish({ destination: `/app/mc-servers/${_currentServerId}/logs/stop` }); } catch { /* ok */ }
-            }
             try { _stompClient.deactivate?.() || _stompClient.ws?.close?.(); } catch { /* ok */ }
             _stompClient = null;
         }
-        _setStatus('disconnected');
+    }
+
+    function _disconnect() {
+        if (_currentServerId) {
+            Api.post(`/api/console/${_currentServerId}/stop`).catch(() => {});
+        }
+        _disconnectTransportOnly();
         const btn = document.getElementById('logs-connect-btn');
         if (btn) btn.textContent = I18n.t('logs.connect');
+    }
+
+    function _clearViewer() {
+        _allLines = [];
+        const viewer = document.getElementById('log-viewer');
+        if (viewer) viewer.innerHTML = '';
     }
 
     function _pushLine(entry) {
         const line = entry.line || entry.message || '';
         const level = entry.level || _detectLevel(line);
-        const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleTimeString() : '';
+        const ts = entry.timestamp
+            ? new Date(entry.timestamp).toLocaleTimeString()
+            : (entry.ts ? new Date(entry.ts).toLocaleTimeString() : '');
         _allLines.push({ raw: line, level, ts });
         if (_filterText && !line.toLowerCase().includes(_filterText)) return;
         _appendLineEl(line, level, ts);
@@ -192,10 +192,10 @@ const LogsView = (() => {
         const viewer = document.getElementById('log-viewer');
         if (!viewer) return;
         const el = document.createElement('div');
-        el.className = `log-line log-line--${level.toLowerCase()}`;
+        el.className = `log-line log-line--${String(level || 'INFO').toLowerCase()}`;
         el.innerHTML = `${ts ? `<span class="log-ts">${ts}</span>` : ''}<span class="log-text">${_escHtml(line)}</span>`;
         viewer.appendChild(el);
-        if (_autoScroll) viewer.scrollTop = viewer.scrollHeight;
+        if (_autoScroll) _scrollToBottom();
     }
 
     function _renderLines() {
@@ -205,30 +205,24 @@ const LogsView = (() => {
         _allLines
             .filter(l => !_filterText || l.raw.toLowerCase().includes(_filterText))
             .forEach(l => _appendLineEl(l.raw, l.level, l.ts));
-        if (_autoScroll) viewer.scrollTop = viewer.scrollHeight;
+        if (_autoScroll) _scrollToBottom();
+    }
+
+    function _scrollToBottom() {
+        const viewer = document.getElementById('log-viewer');
+        if (!viewer) return;
+        requestAnimationFrame(() => { viewer.scrollTop = viewer.scrollHeight; });
     }
 
     function _detectLevel(line) {
         const u = (line || '').toUpperCase();
         if (u.includes('ERROR') || u.includes('EXCEPTION') || u.includes('FATAL')) return 'ERROR';
-        if (u.includes('WARN'))  return 'WARN';
+        if (u.includes('WARN')) return 'WARN';
         return 'INFO';
     }
 
-    function _setStatus(state) {
-        const el = document.getElementById('logs-status');
-        if (!el) return;
-        const map = {
-            connecting:  { text: I18n.t('logs.connecting'),  cls: 'status-connecting' },
-            connected:   { text: I18n.t('logs.connected'),    cls: 'status-online' },
-            disconnected:{ text: I18n.t('logs.disconnected'), cls: 'status-offline' },
-        };
-        const info = map[state] || map.disconnected;
-        el.innerHTML = `<span class="status-pill ${info.cls}"><span class="status-dot"></span>${info.text}</span>`;
-    }
-
     function _escHtml(str) {
-        return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function _normalizeRecentLogs(recent) {

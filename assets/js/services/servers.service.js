@@ -47,8 +47,12 @@ const ServersService = (() => {
         return Api.post(`/api/mc-servers/${id}/rcon`, { command });
     }
 
-    async function getRecentLogs(id, lines = 200) {
-        return Api.get(`/api/mc-servers/${id}/console?lines=${lines}`);
+    async function getRecentLogs(id, lines = 500, offset = 0) {
+        return Api.get(`/api/console/${id}/log?lines=${lines}&offset=${offset}`);
+    }
+
+    async function createModsShareLink(id) {
+        return Api.post(`/api/mc-servers/${id}/mods/share-link`);
     }
 
     return {
@@ -64,6 +68,7 @@ const ServersService = (() => {
         restart,
         redeploy,
         sendRcon,
-        getRecentLogs
+        getRecentLogs,
+        createModsShareLink
     };
 })();

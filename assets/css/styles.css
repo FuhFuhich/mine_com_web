@@ -1086,10 +1086,22 @@ body[data-theme="light"] .logs-toolbar { border-bottom-color: rgba(0,0,0,0.06); 
 body[data-theme="light"] .logs-filter-input { background: #f5f5f5; border-color: rgba(0,0,0,0.1); color: #1a1a1a; }
 .logs-filter-input:focus { border-color: var(--accent-green); }
 
+.logs-card {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 170px);
+  max-height: calc(100vh - 170px);
+}
+
 .log-viewer {
-  height: 460px; overflow-y: auto;
-  border-radius: var(--radius-md); padding: 10px 12px;
-  font-family: 'Courier New', Courier, monospace; font-size: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
   line-height: 1.55;
 }
 body[data-theme="dark"]  .log-viewer { background: #0d0d0d; border: 1px solid rgba(255,255,255,0.06); }
@@ -1457,4 +1469,35 @@ body[data-theme="light"] .quick-log-lines--empty {
 .profile-avatar-overlay span,
 .ip-reveal-btn {
   filter: grayscale(1) saturate(0);
+}
+
+@media (max-width: 900px) {
+  .logs-card {
+    min-height: calc(100vh - 150px);
+    max-height: calc(100vh - 150px);
+  }
+}
+
+
+/* ── Configs browser refinements ───────────────────────────── */
+.configs-layout--browser {
+  min-height: 560px;
+}
+.configs-browser-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px 10px;
+}
+.configs-browser-path {
+  min-width: 0; flex: 1;
+  font-size: 11px; opacity: 0.6;
+  font-family: monospace;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.configs-tree-area {
+  display: flex; flex-direction: column; gap: 4px;
+  max-height: 420px; overflow-y: auto;
+  padding: 0 4px 8px;
+}
+.configs-tree-empty {
+  padding: 12px 8px; font-size: 12px; opacity: 0.65;
 }

@@ -67,12 +67,6 @@
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" data-view-target="files">
-            <span class="nav-link-icon">▣</span>
-            <span data-i18n="nav.files">Files</span>
-          </button>
-        </li>
-        <li class="nav-item">
           <button class="nav-link" data-view-target="backups">
             <span class="nav-link-icon">◫</span>
             <span data-i18n="nav.backups">Backups</span>
@@ -179,11 +173,6 @@
       <!-- CONFIGS -->
       <section class="view" data-view="configs">
         <div id="configs-container"></div>
-      </section>
-
-      <!-- FILES -->
-      <section class="view" data-view="files">
-        <div id="files-container"></div>
       </section>
 
       <!-- BACKUPS -->
@@ -590,6 +579,7 @@
 </div>
 
 <!-- ══ SCRIPTS ═══════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@6/bundles/stomp.umd.min.js"></script>
 <!-- core -->
 <script src="assets/js/core/i18n.js"></script>

@@ -15,7 +15,17 @@ const DashboardView = (() => {
         if (h > 0) return `${h}h ${m}m`;
         return `${m}m`;
     }
-    function pct(val) { return val != null ? `${Math.round(val)}%` : '—'; }
+    function pct(val) {
+        if (val == null || Number.isNaN(Number(val))) return '—';
+        return `${Math.round(Number(val))}%`;
+    }
+    function normalizeServerStatus(status) {
+        return String(status || 'OFFLINE').trim().toUpperCase();
+    }
+    function isServerOnline(status) {
+        const s = normalizeServerStatus(status);
+        return ['ONLINE', 'RUNNING', 'STARTED'].includes(s);
+    }
 
     async function render() {
         const el = document.getElementById('profile-block');
@@ -81,44 +91,33 @@ const DashboardView = (() => {
         const container = document.getElementById('dashboard-summary');
         if (!container) return;
 
-        let nodes = [], servers = [];
+        let dashboard = null;
+        let nodes = [];
+        let servers = [];
+
+        try { dashboard = await Api.get('/api/dashboard'); } catch { dashboard = null; }
         try { nodes = await Api.get('/api/nodes') || []; } catch { nodes = []; }
         try { servers = await Api.get('/api/mc-servers') || []; } catch { servers = []; }
 
-        const onlineNodes = nodes.filter(n => n.status === 'ONLINE' || n.isActive).length;
-        const runningServers = servers.filter(s => s.status === 'RUNNING').length;
+        const totalNodes = dashboard?.totalNodes ?? nodes.length;
+        const onlineNodes = dashboard?.onlineNodes ?? nodes.filter(n => n.status === 'ONLINE' || n.isActive).length;
 
-        let totalBackups = 0;
-        const metricsArr = [];
-        await Promise.all(nodes.map(async n => {
-            try {
-                const m = await MetricsService.getNodeLatest(n.id);
-                if (m) metricsArr.push(m);
-            } catch { /* no metrics */ }
-        }));
+        const totalServers = dashboard?.totalMcServers ?? servers.length;
+        const onlineServers = dashboard?.onlineMcServers ?? servers.filter(s => isServerOnline(s.status)).length;
 
-        for (const s of servers) {
-            try {
-                const backups = await BackupsService.getAll(s.id);
-                totalBackups += (backups || []).length;
-            } catch { /* skip */ }
-        }
-
-        const avgCpu = metricsArr.length ? (metricsArr.reduce((a, m) => a + (m.cpuUsagePct || 0), 0) / metricsArr.length).toFixed(1) : null;
-        const avgRamPct = metricsArr.length ? (metricsArr.reduce((a, m) => a + (m.ramUsedMb && m.ramTotalMb ? m.ramUsedMb / m.ramTotalMb * 100 : 0), 0) / metricsArr.length).toFixed(1) : null;
-        const avgDiskPct = metricsArr.length ? (metricsArr.reduce((a, m) => a + (m.diskUsedMb && m.diskTotalMb ? m.diskUsedMb / m.diskTotalMb * 100 : 0), 0) / metricsArr.length).toFixed(1) : null;
-        const totalDockerTotal = metricsArr.reduce((a, m) => a + (m.dockerContainersTotal || 0), 0);
-        const totalDockerRunning = metricsArr.reduce((a, m) => a + (m.dockerContainersRunning || 0), 0);
+        const totalBackups = dashboard?.totalBackups ?? 0;
+        const avgCpu = dashboard && typeof dashboard.avgCpuPercent === 'number' ? dashboard.avgCpuPercent : null;
+        const avgRamPct = dashboard && typeof dashboard.avgRamPercent === 'number' ? dashboard.avgRamPercent : null;
+        const avgDiskPct = dashboard && typeof dashboard.avgDiskPercent === 'number' ? dashboard.avgDiskPercent : null;
 
         container.innerHTML = `
         <div class="summary-grid">
-            ${summaryCard(I18n.t('dash.nodes'), nodes.length, `${onlineNodes} ${I18n.t('dash.nodesOnline')}`, '▦', onlineNodes > 0 ? 'green' : 'neutral')}
-            ${summaryCard(I18n.t('dash.mcServers'), servers.length, `${runningServers} ${I18n.t('dash.mcRunning')}`, '≋', runningServers > 0 ? 'green' : 'neutral')}
-            ${summaryCard(I18n.t('dash.backups'), totalBackups, '', '◫', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.cpu'), avgCpu != null ? pct(avgCpu) : '—', '', '◌', cpuColor(avgCpu)) : summaryCard(I18n.t('dash.cpu'), '—', '', '◌', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.ram'), avgRamPct != null ? pct(avgRamPct) : '—', '', '◧', cpuColor(avgRamPct)) : summaryCard(I18n.t('dash.ram'), '—', '', '◧', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.disk'), avgDiskPct != null ? pct(avgDiskPct) : '—', '', '◫', cpuColor(avgDiskPct)) : summaryCard(I18n.t('dash.disk'), '—', '', '◫', 'neutral')}
-            ${metricsArr.length ? summaryCard(I18n.t('dash.docker'), totalDockerRunning, `${totalDockerTotal} ${I18n.t('metrics.containers')}`, '◇', 'neutral') : ''}
+            ${summaryCard(I18n.t('dash.nodes'), totalNodes, `${onlineNodes} ${I18n.t('dash.nodesOnline')}`, '▦', onlineNodes > 0 ? 'green' : 'neutral')}
+            ${summaryCard(I18n.t('dash.mcServers'), totalServers, `${onlineServers} ${I18n.t('dash.mcRunning')}`, '≋', onlineServers > 0 ? 'green' : 'neutral')}
+            ${summaryCard(I18n.t('dash.backups'), totalBackups, '', '◫', totalBackups > 0 ? 'green' : 'neutral')}
+            ${summaryCard(I18n.t('dash.cpu'), avgCpu != null ? pct(avgCpu) : '—', '', '◌', cpuColor(avgCpu))}
+            ${summaryCard(I18n.t('dash.ram'), avgRamPct != null ? pct(avgRamPct) : '—', '', '◧', cpuColor(avgRamPct))}
+            ${summaryCard(I18n.t('dash.disk'), avgDiskPct != null ? pct(avgDiskPct) : '—', '', '◫', cpuColor(avgDiskPct))}
         </div>
         ${rolesBlock(nodes)}
         ${quickLinks(nodes, servers)}`;
@@ -157,7 +156,7 @@ const DashboardView = (() => {
     }
 
     function quickLinks(nodes, servers) {
-        const problems = servers.filter(s => s.status === 'ERROR').map(s =>
+        const problems = servers.filter(s => normalizeServerStatus(s.status) === 'ERROR').map(s =>
             `<div class="quick-link quick-link--error" data-view-nav="servers">! ${s.name} — ${I18n.t('servers.status.ERROR')}</div>`
         );
         const offlineNodes = nodes.filter(n => n.status !== 'ONLINE' && !n.isActive).map(n =>
@@ -182,88 +181,75 @@ const DashboardView = (() => {
             const existing = wrap.querySelector('img, .profile-avatar-letter');
             if (existing) existing.remove();
             const img = document.createElement('img');
-            img.src = Api.getBase() + updated.avatarUrl + `?t=${Date.now()}`;
             img.className = 'profile-avatar-img';
-            wrap.insertBefore(img, wrap.querySelector('.profile-avatar-overlay'));
+            img.alt = 'avatar';
+            img.src = `${Api.getBase()}${updated.avatarUrl}?t=${Date.now()}`;
+            wrap.prepend(img);
             Toast.show(I18n.t('profile.avatarUpdated'), 'success');
-        } catch (err) {
-            Toast.show(err.message || I18n.t('profile.saveError'), 'error');
+        } catch (e) {
+            Toast.show(e.message || 'Avatar update failed', 'error');
         } finally {
             if (wrap) wrap.classList.remove('loading');
         }
     }
 
     function _openEditModal(user) {
-        document.getElementById('pe-username').value = user.username || user.name || '';
-        document.getElementById('pe-email').value = user.email || '';
-        document.getElementById('pe-phone').value = user.phoneNumber || '';
-        document.getElementById('profile-edit-overlay').classList.add('active');
+        const overlay = document.getElementById('profile-edit-modal');
+        if (!overlay) return;
+        document.getElementById('profile-edit-username').value = user.username || '';
+        document.getElementById('profile-edit-email').value = user.email || '';
+        overlay.classList.add('active');
     }
-    function _closeEditModal() { document.getElementById('profile-edit-overlay').classList.remove('active'); }
+
+    function _closeEditModal() {
+        document.getElementById('profile-edit-modal')?.classList.remove('active');
+    }
 
     function _openPasswordModal() {
-        ['pp-cur', 'pp-new', 'pp-new2'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-        document.getElementById('profile-pwd-overlay').classList.add('active');
+        document.getElementById('password-modal')?.classList.add('active');
     }
-    function _closePwdModal() { document.getElementById('profile-pwd-overlay').classList.remove('active'); }
+
+    function _closePasswordModal() {
+        document.getElementById('password-modal')?.classList.remove('active');
+    }
 
     function initModals() {
-        const editOverlay = document.getElementById('profile-edit-overlay');
-        const pwdOverlay  = document.getElementById('profile-pwd-overlay');
+        document.getElementById('profile-edit-close')?.addEventListener('click', _closeEditModal);
+        document.getElementById('password-close')?.addEventListener('click', _closePasswordModal);
 
-        editOverlay?.addEventListener('click', e => { if (e.target === editOverlay) _closeEditModal(); });
-        pwdOverlay?.addEventListener('click',  e => { if (e.target === pwdOverlay) _closePwdModal(); });
-        document.getElementById('pe-cancel')?.addEventListener('click', _closeEditModal);
-        document.getElementById('pp-cancel')?.addEventListener('click', _closePwdModal);
-
-        document.querySelectorAll('#profile-pwd-overlay .eye-btn').forEach(btn =>
-            btn.addEventListener('click', () => {
-                const input = document.getElementById(btn.dataset.target);
-                if (input) { input.type = input.type === 'password' ? 'text' : 'password'; }
-                btn.style.opacity = input?.type === 'password' ? '0.45' : '1';
-            })
-        );
-
-        document.getElementById('pe-save')?.addEventListener('click', async () => {
-            const btn = document.getElementById('pe-save');
-            btn.disabled = true;
+        document.getElementById('profile-edit-save')?.addEventListener('click', async () => {
             try {
-                const updated = await Api.patch('/api/user/me', {
-                    username: document.getElementById('pe-username').value.trim() || null,
-                    email:    document.getElementById('pe-email').value.trim() || null,
-                    phoneNumber: document.getElementById('pe-phone').value.trim() || null,
-                });
-                _user = { ..._user, ...updated };
-                const nameEl = document.getElementById('profile-username');
-                if (nameEl) nameEl.textContent = updated.username || updated.name || '';
-                Toast.show(I18n.t('profile.saved'), 'success');
+                const payload = {
+                    username: document.getElementById('profile-edit-username').value.trim(),
+                    email: document.getElementById('profile-edit-email').value.trim()
+                };
+                _user = await Api.put('/api/user/me', payload);
+                renderProfile(_user);
                 _closeEditModal();
-            } catch (err) {
-                Toast.show(err.message || I18n.t('profile.saveError'), 'error');
-            } finally { btn.disabled = false; }
+                Toast.show(I18n.t('profile.saved'), 'success');
+            } catch (e) {
+                Toast.show(e.message || 'Save failed', 'error');
+            }
         });
 
-        document.getElementById('pp-save')?.addEventListener('click', async () => {
-            const newPwd  = document.getElementById('pp-new').value;
-            const newPwd2 = document.getElementById('pp-new2').value;
-            if (newPwd !== newPwd2) { Toast.show(I18n.t('auth.pwdMismatch'), 'error'); return; }
-            if (newPwd.length < 6) { Toast.show(I18n.t('auth.pwdShort'), 'error'); return; }
-            const btn = document.getElementById('pp-save');
-            btn.disabled = true;
+        document.getElementById('password-save')?.addEventListener('click', async () => {
+            const currentPassword = document.getElementById('password-current').value;
+            const newPassword = document.getElementById('password-new').value;
+            const confirmPassword = document.getElementById('password-confirm').value;
+            if (!newPassword || newPassword !== confirmPassword) {
+                Toast.show(I18n.t('profile.passwordMismatch'), 'error');
+                return;
+            }
             try {
-                await Api.put('/api/user/me/password', {
-                    currentPassword: document.getElementById('pp-cur').value,
-                    newPassword: newPwd,
-                });
+                await Api.post('/api/user/me/change-password', { currentPassword, newPassword });
+                _closePasswordModal();
+                document.getElementById('password-current').value = '';
+                document.getElementById('password-new').value = '';
+                document.getElementById('password-confirm').value = '';
                 Toast.show(I18n.t('profile.passwordChanged'), 'success');
-                _closePwdModal();
-            } catch (err) {
-                Toast.show(err.message || I18n.t('profile.saveError'), 'error');
-            } finally { btn.disabled = false; }
-        });
-
-        document.addEventListener('click', e => {
-            if (e.target.dataset.viewNav) Router.navigate(e.target.dataset.viewNav);
+            } catch (e) {
+                Toast.show(e.message || 'Password change failed', 'error');
+            }
         });
     }
 

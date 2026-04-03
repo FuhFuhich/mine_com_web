@@ -27,7 +27,6 @@ const App = (() => {
         Router.on('metrics',  MetricsView.render);
         Router.on('logs',     LogsView.render);
         Router.on('configs',  ConfigsView.render);
-        Router.on('files',    FilesView.render);
         Router.on('backups',  BackupsView.render);
 
         Router.init();

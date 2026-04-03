@@ -35,6 +35,16 @@ const NodesView = (() => {
         return (map[role] || map.USER).includes(action);
     }
 
+    function _buildActions(node) {
+        return [
+            canDo(node,'ping') ? `<button class="action-btn action-btn--neutral node-ping-btn" data-id="${node.id}">${I18n.t('nodes.action.ping')}</button>` : '',
+            canDo(node,'edit') ? `<button class="action-btn action-btn--neutral node-edit-btn" data-id="${node.id}">${I18n.t('nodes.action.edit')}</button>` : '',
+            canDo(node,'metrics') ? `<button class="action-btn action-btn--neutral node-metrics-btn" data-id="${node.id}">${I18n.t('nodes.action.metrics')}</button>` : '',
+            canDo(node,'manage_members') ? `<button class="action-btn action-btn--neutral node-members-btn" data-id="${node.id}" data-name="${node.name}">${I18n.t('nodes.action.members')}</button>` : '',
+            canDo(node,'delete') ? `<button class="action-btn action-btn--stop node-delete-btn" data-id="${node.id}" data-name="${node.name}">${I18n.t('nodes.action.delete')}</button>` : '',
+        ].filter(Boolean).join('');
+    }
+
     /* ─── render ─── */
     function renderSkeleton() {
         const tbody = document.getElementById('nodes-tbody');
@@ -71,19 +81,17 @@ const NodesView = (() => {
         tbody.innerHTML = nodes.map(n => `
             <tr data-node-id="${n.id}">
                 <td>
-                    <div class="node-name">${n.name}</div>
-                    ${n.description ? `<div class="node-desc">${n.description}</div>` : ''}
+                    <div class="node-cell-stack">
+                        <div class="node-name">${n.name}</div>
+                        ${n.description ? `<div class="node-desc">${n.description}</div>` : ''}
+                    </div>
                 </td>
                 <td>${ipMasked(n.ipAddress)}</td>
                 <td>${n.sshPort ?? 22}</td>
                 <td>${n.sshUser ?? ''}</td>
                 <td data-node-status="${n.id}">${statusPill(n)}</td>
                 <td class="nodes-actions-cell">
-                    ${canDo(n,'ping')   ? `<button class="action-btn action-btn--neutral node-ping-btn"    data-id="${n.id}">${I18n.t('nodes.action.ping')}</button>` : ''}
-                    ${canDo(n,'edit')   ? `<button class="action-btn action-btn--neutral node-edit-btn"    data-id="${n.id}">${I18n.t('nodes.action.edit')}</button>` : ''}
-                    ${canDo(n,'metrics')? `<button class="action-btn action-btn--neutral node-metrics-btn" data-id="${n.id}">${I18n.t('nodes.action.metrics')}</button>` : ''}
-                    ${canDo(n,'manage_members') ? `<button class="action-btn action-btn--neutral node-members-btn" data-id="${n.id}" data-name="${n.name}">${I18n.t('nodes.action.members')}</button>` : ''}
-                    ${canDo(n,'delete') ? `<button class="action-btn action-btn--stop node-delete-btn"    data-id="${n.id}" data-name="${n.name}">${I18n.t('nodes.action.delete')}</button>` : ''}
+                    ${_buildActions(n)}
                 </td>
                 <td>${roleBadge(n.myRole)}</td>
             </tr>`
@@ -121,7 +129,7 @@ const NodesView = (() => {
         if (!tbody) return;
         tbody.innerHTML = `<tr><td colspan="7"><div class="placeholder-empty">
             <div class="placeholder-icon">!</div>
-            <div class="placeholder-title">Error</div>
+            <div class="placeholder-title">${I18n.t('common.error')}</div>
             <div class="placeholder-hint">${msg}</div>
         </div></td></tr>`;
     }
@@ -163,6 +171,7 @@ const NodesView = (() => {
         const msg = document.getElementById('node-confirm-msg');
         if (msg) msg.textContent = `${I18n.t('nodes.action.delete')} "${name}"?`;
         overlay.dataset.pendingId = nodeId;
+        overlay.dataset.pendingName = name || '';
         overlay.classList.add('active');
     }
 
@@ -279,7 +288,7 @@ const NodesView = (() => {
         const overlay = document.getElementById('node-members-overlay');
         document.getElementById('node-members-title').textContent = nodeName;
         overlay.dataset.nodeId = nodeId;
-        document.getElementById('node-members-list').innerHTML = `<div style="opacity:0.5;font-size:12px;padding:8px">Loading...</div>`;
+        document.getElementById('node-members-list').innerHTML = `<div style="opacity:0.5;font-size:12px;padding:8px">${I18n.t('common.loading')}</div>`;
         overlay.classList.add('active');
         try {
             const members = await NodesService.getMembers(nodeId);
@@ -292,7 +301,7 @@ const NodesView = (() => {
     function _renderMembersList(members, nodeId) {
         const list = document.getElementById('node-members-list');
         if (!members.length) {
-            list.innerHTML = `<div style="opacity:0.5;font-size:12px;padding:8px">No members yet.</div>`;
+            list.innerHTML = `<div style="opacity:0.5;font-size:12px;padding:8px">${I18n.t('nodes.members.empty')}</div>`;
             return;
         }
         list.innerHTML = members.map(m => {
@@ -400,5 +409,33 @@ const NodesView = (() => {
         });
     }
 
-    return { render, initModal };
+    function refreshLocale() {
+        const tbody = document.getElementById('nodes-tbody');
+        if (tbody && _nodes.length) {
+            _drawTable(_nodes);
+        }
+        _populateNodeSelect(_nodes);
+
+        const nodeOverlay = document.getElementById('node-modal-overlay');
+        if (nodeOverlay?.classList.contains('active')) {
+            document.getElementById('node-modal-title').textContent = I18n.t(_editingNodeId ? 'nodes.modal.editTitle' : 'nodes.modal.title');
+            document.getElementById('node-modal-submit').textContent = I18n.t(_editingNodeId ? 'nodes.modal.save' : 'nodes.modal.add');
+        }
+
+        const confirmOverlay = document.getElementById('node-confirm-overlay');
+        if (confirmOverlay?.classList.contains('active')) {
+            const msg = document.getElementById('node-confirm-msg');
+            if (msg) msg.textContent = `${I18n.t('nodes.action.delete')} "${confirmOverlay.dataset.pendingName || ''}"?`;
+        }
+
+        const membersOverlay = document.getElementById('node-members-overlay');
+        if (membersOverlay?.classList.contains('active')) {
+            const list = document.getElementById('node-members-list');
+            if (list && list.textContent.trim() === '') {
+                list.innerHTML = `<div style="opacity:0.5;font-size:12px;padding:8px">${I18n.t('nodes.members.empty')}</div>`;
+            }
+        }
+    }
+
+    return { render, initModal, refreshLocale };
 })();

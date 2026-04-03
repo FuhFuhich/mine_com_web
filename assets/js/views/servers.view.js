@@ -4,6 +4,7 @@ const ServersView = (() => {
     let _dockerOptions = [];
     let _bundles = [];
     let _quickLogCache = new Map();
+    let _nodeRoles = new Map();
 
     /* ─── status ─── */
     const STATUS_CLASS = {
@@ -18,17 +19,45 @@ const ServersView = (() => {
         CREATING: 'status-connecting',
         ERROR: 'status-error',
     };
+
+    function normalizeStatus(status) {
+        const raw = String(status || '').trim().toUpperCase();
+        if (!raw) return 'OFFLINE';
+        const map = {
+            RUNNING: 'ONLINE',
+            ONLINE: 'ONLINE',
+            STARTED: 'ONLINE',
+            STOPPED: 'OFFLINE',
+            OFFLINE: 'OFFLINE',
+            STARTING: 'STARTING',
+            STOPPING: 'STOPPING',
+            RESTARTING: 'RESTARTING',
+            DEPLOYING: 'DEPLOYING',
+            CREATING: 'DEPLOYING',
+            ERROR: 'ERROR',
+            CRASHED: 'ERROR',
+            FAILED: 'ERROR',
+        };
+        return map[raw] || raw;
+    }
+
     function statusPill(status) {
-        const normalized = String(status || 'OFFLINE').toUpperCase();
+        const normalized = normalizeStatus(status);
         const cls = STATUS_CLASS[normalized] || 'status-offline';
-        const label = I18n.t(`servers.status.${normalized}`) || normalized;
-        return `<span class="status-pill ${cls}"><span class="status-dot"></span>${label}</span>`;
+        const label = I18n.t(`servers.status.${normalized}`);
+        return `<span class="status-pill ${cls}"><span class="status-dot"></span>${label !== `servers.status.${normalized}` ? label : normalized}</span>`;
     }
 
     /* ─── permission check ─── */
     function can(server, action) {
         if (server.allowedActions) return server.allowedActions.includes(action);
         return true;
+    }
+
+    function canShareMods(server) {
+        const role = String(_nodeRoles.get(String(server.nodeId)) || '').toUpperCase();
+        if (!role) return true;
+        return role !== 'USER';
     }
 
     /* ─── table ─── */
@@ -88,7 +117,7 @@ const ServersView = (() => {
 
     function _buildActions(s) {
         const id = s.id;
-        const normalizedStatus = String(s.status || 'OFFLINE').toUpperCase();
+        const normalizedStatus = normalizeStatus(s.status);
         const busy = ['STARTING','STOPPING','RESTARTING','DEPLOYING','CREATING'].includes(normalizedStatus);
         if (busy) {
             return `<button class="action-btn action-btn--neutral" disabled style="opacity:0.6">${statusPill(normalizedStatus)}</button>`;
@@ -106,8 +135,8 @@ const ServersView = (() => {
         if (can(s,'redeploy'))      parts.push(`<button class="action-btn action-btn--neutral" data-action="redeploy" data-id="${id}">${I18n.t('servers.action.redeploy')}</button>`);
         if (can(s,'backup'))        parts.push(`<button class="action-btn action-btn--neutral" data-action="backup" data-id="${id}">${I18n.t('servers.action.backup')}</button>`);
         if (can(s,'metrics'))       parts.push(`<button class="action-btn action-btn--neutral" data-action="metrics" data-id="${id}">${I18n.t('servers.action.metrics')}</button>`);
-        if (can(s,'files'))         parts.push(`<button class="action-btn action-btn--neutral" data-action="files" data-id="${id}">${I18n.t('servers.action.files')}</button>`);
         if (can(s,'configs'))       parts.push(`<button class="action-btn action-btn--neutral" data-action="configs" data-id="${id}">${I18n.t('servers.action.configs')}</button>`);
+        if (canShareMods(s))        parts.push(`<button class="action-btn action-btn--neutral" data-action="share_mods" data-id="${id}">${I18n.t('servers.action.shareMods')}</button>`);
         parts.push(`<button class="action-btn action-btn--neutral" data-action="backups" data-id="${id}">${I18n.t('servers.action.backups')}</button>`);
         if (can(s,'edit'))          parts.push(`<button class="action-btn action-btn--neutral" data-action="edit" data-id="${id}">${I18n.t('servers.action.edit')}</button>`);
         if (s.rconEnabled && can(s,'view')) parts.push(`<button class="action-btn action-btn--neutral" data-action="rcon" data-id="${id}">${I18n.t('servers.action.rcon')}</button>`);
@@ -157,7 +186,7 @@ const ServersView = (() => {
         try {
             let lines = _quickLogCache.get(serverId);
             if (!lines) {
-                const recent = await ServersService.getRecentLogs(serverId, 40);
+                const recent = await ServersService.getRecentLogs(serverId, 200);
                 lines = _normalizeRecentLogs(recent);
                 _quickLogCache.set(serverId, lines);
             }
@@ -209,7 +238,7 @@ const ServersView = (() => {
             return;
         }
         container.className = 'quick-log-lines';
-        container.innerHTML = lines.slice(-30).map(line => `<div class="quick-log-line">${_escapeHtml(line)}</div>`).join('');
+        container.innerHTML = lines.slice(-120).map(line => `<div class="quick-log-line">${_escapeHtml(line)}</div>`).join('');
     }
 
     function _closeQuickLogs(serverId) {
@@ -245,8 +274,8 @@ const ServersView = (() => {
 
         if (action === 'edit') { _openEditModal(id); return; }
         if (action === 'metrics') { Router.navigate('metrics'); setTimeout(() => _preselectServer('metrics-mc-select', id), 80); return; }
-        if (action === 'files')   { Router.navigate('files');   setTimeout(() => _preselectServer('files-server-select', id), 80); return; }
         if (action === 'configs') { Router.navigate('configs'); setTimeout(() => _preselectServer('configs-server-select', id), 80); return; }
+        if (action === 'share_mods') { await _shareMods(id); return; }
         if (action === 'backups') { Router.navigate('backups'); setTimeout(() => _preselectServer('backups-server-select', id), 80); return; }
         if (action === 'rcon')    { _openRconModal(id, s?.name); return; }
         if (action === 'delete_device') { _confirmDelete(id, s?.name, 'device'); return; }
@@ -280,6 +309,22 @@ const ServersView = (() => {
             Toast.show(err.message, 'error');
         } finally {
             if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+        }
+    }
+
+    async function _shareMods(id) {
+        try {
+            const res = await ServersService.createModsShareLink(id);
+            const url = res?.url;
+            if (!url) throw new Error(I18n.t('servers.share.error'));
+            if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(url);
+                Toast.show(I18n.t('servers.share.copied'), 'success');
+            } else {
+                window.prompt(I18n.t('servers.share.prompt'), url);
+            }
+        } catch (err) {
+            Toast.show(err.message || I18n.t('servers.share.error'), 'error');
         }
     }
 
@@ -547,7 +592,12 @@ const ServersView = (() => {
     /* ─── render ─── */
     async function render() {
         try {
-            _servers = await ServersService.getAll();
+            const [servers, nodes] = await Promise.all([
+                ServersService.getAll(),
+                NodesService.getAll().catch(() => [])
+            ]);
+            _servers = servers;
+            _nodeRoles = new Map((nodes || []).map(node => [String(node.id), String(node.myRole || '').toUpperCase()]));
             _drawTable(_servers);
         } catch (err) {
             const tbody = document.getElementById('servers-tbody');
