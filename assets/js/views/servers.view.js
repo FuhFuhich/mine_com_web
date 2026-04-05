@@ -431,6 +431,8 @@ const ServersView = (() => {
         const targetRadio = document.querySelector(`input[name="mc-deploy-target"][value="${target}"]`);
         if (targetRadio) targetRadio.checked = true;
 
+        await _syncDeployTarget();
+
         if (target === 'baremetal' && s.bundleId) {
             document.getElementById('f-bundle').value = s.bundleId;
         } else if (target === 'docker') {
@@ -438,7 +440,6 @@ const ServersView = (() => {
             _onVersionChange(s.minecraftVersion, s.modLoader, s.modLoaderVersion);
         }
 
-        await _syncDeployTarget();
         document.getElementById('mc-modal-overlay').classList.add('active');
     }
 
@@ -503,17 +504,25 @@ const ServersView = (() => {
     function _onVersionChange(version, preselectLoader, preselectLV) {
         const loaders = CatalogService.getLoadersForVersion(_dockerOptions, version);
         const loaderSel = document.getElementById('f-mod-loader');
+        const selectedLoader = loaders.includes(preselectLoader) ? preselectLoader : (loaders[0] || '');
+
         loaderSel.innerHTML = `<option value="">${I18n.t('modal.selectLoader')}</option>` +
-            loaders.map(l => `<option value="${l}" ${l === preselectLoader ? 'selected' : ''}>${l}</option>`).join('');
+            loaders.map(l => `<option value="${l}" ${l === selectedLoader ? 'selected' : ''}>${l}</option>`).join('');
+
         document.getElementById('f-mod-loader-version').innerHTML = `<option value="">${I18n.t('modal.selectLoaderVersion')}</option>`;
-        if (preselectLoader) _onLoaderChange(version, preselectLoader, preselectLV);
+
+        if (selectedLoader) {
+            _onLoaderChange(version, selectedLoader, preselectLV);
+        }
     }
 
     function _onLoaderChange(version, loader, preselectLV) {
         const versions = CatalogService.getLoaderVersions(_dockerOptions, version, loader);
+        const selectedVersion = versions.includes(preselectLV) ? preselectLV : (versions[0] || '');
         const sel = document.getElementById('f-mod-loader-version');
+
         sel.innerHTML = `<option value="">${I18n.t('modal.selectLoaderVersion')}</option>` +
-            versions.map(v => `<option value="${v}" ${v === preselectLV ? 'selected' : ''}>${v}</option>`).join('');
+            versions.map(v => `<option value="${v}" ${v === selectedVersion ? 'selected' : ''}>${v}</option>`).join('');
     }
 
     async function _submitModal() {

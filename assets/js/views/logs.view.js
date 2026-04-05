@@ -3,11 +3,36 @@ const LogsView = (() => {
     let _currentServerId = null;
     let _autoScroll = true;
     let _filterText = '';
+    const STATE_KEY = 'mc.logs.state';
     let _allLines = [];
+
+
+    function _loadState() {
+        try {
+            const parsed = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+
+    function _saveState(patch = {}) {
+        const nextState = { ..._loadState(), ...patch };
+        try {
+            sessionStorage.setItem(STATE_KEY, JSON.stringify(nextState));
+        } catch {
+            /* no-op */
+        }
+        return nextState;
+    }
 
     function render() {
         const container = document.getElementById('logs-container');
         if (!container) return;
+        const savedState = _loadState();
+        _autoScroll = savedState.autoScroll !== false;
+        _filterText = String(savedState.filterText || '').toLowerCase();
+        _currentServerId = savedState.serverId || null;
         container.innerHTML = `
         <div class="card table-card logs-card">
             <div class="card-header">
@@ -20,13 +45,15 @@ const LogsView = (() => {
                 <button class="action-btn action-btn--start" id="logs-connect-btn" disabled>${I18n.t('logs.connect')}</button>
                 <input type="text" id="logs-filter" class="logs-filter-input" placeholder="${I18n.t('logs.filter')}" style="flex:1;min-width:120px">
                 <label class="check-option" style="white-space:nowrap">
-                    <input type="checkbox" id="logs-autoscroll" checked> ${I18n.t('logs.autoScroll')}
+                    <input type="checkbox" id="logs-autoscroll" ${_autoScroll ? 'checked' : ''}> ${I18n.t('logs.autoScroll')}
                 </label>
                 <button class="action-btn action-btn--neutral" id="logs-clear-btn">${I18n.t('logs.clear')}</button>
                 <button class="action-btn action-btn--neutral" id="logs-copy-btn">${I18n.t('logs.copy')}</button>
             </div>
             <div class="log-viewer" id="log-viewer"></div>
         </div>`;
+        const filterInput = document.getElementById('logs-filter');
+        if (filterInput) filterInput.value = savedState.filterText || '';
         _populateServers();
         _bindEvents();
     }
@@ -38,12 +65,20 @@ const LogsView = (() => {
             const servers = await ServersService.getAll();
             sel.innerHTML = `<option value="">${I18n.t('logs.selectServer')}</option>` +
                 servers.map(s => `<option value="${s.id}">${s.name} (${s.nodeName || s.nodeId || ''})</option>`).join('');
+            const savedState = _loadState();
+            if (savedState.serverId && servers.some(server => String(server.id) === String(savedState.serverId))) {
+                sel.value = String(savedState.serverId);
+                _currentServerId = sel.value;
+                const connectBtn = document.getElementById('logs-connect-btn');
+                if (connectBtn) connectBtn.disabled = !_currentServerId;
+            }
         } catch { /* ignore */ }
     }
 
     function _bindEvents() {
         document.getElementById('logs-server-select')?.addEventListener('change', e => {
             _currentServerId = e.target.value || null;
+            _saveState({ serverId: _currentServerId || '' });
             document.getElementById('logs-connect-btn').disabled = !_currentServerId;
             _clearViewer();
             if (!_currentServerId) _disconnect();
@@ -57,10 +92,12 @@ const LogsView = (() => {
         });
         document.getElementById('logs-autoscroll')?.addEventListener('change', e => {
             _autoScroll = e.target.checked;
+            _saveState({ autoScroll: _autoScroll });
             if (_autoScroll) _scrollToBottom();
         });
         document.getElementById('logs-filter')?.addEventListener('input', e => {
             _filterText = e.target.value.toLowerCase();
+            _saveState({ filterText: e.target.value || '' });
             _renderLines();
         });
         document.getElementById('logs-clear-btn')?.addEventListener('click', () => {

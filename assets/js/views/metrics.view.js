@@ -10,11 +10,33 @@ const MetricsView = (() => {
     let _nodes = [];
     let _servers = [];
     let _activeRange = '24h';
+    const STATE_KEY = 'mc.metrics.state';
     let _serverRefreshTimer = null;
     let _tooltipHost = null;
 
     function _resolveRoot(root) {
         return root || document.getElementById('metrics-container');
+    }
+
+
+    function _loadState() {
+        try {
+            const parsed = JSON.parse(sessionStorage.getItem(STATE_KEY) || '{}');
+            return parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+            return {};
+        }
+    }
+
+    function _saveState(patch = {}) {
+        const nextState = { ..._loadState(), ...patch };
+        try {
+            sessionStorage.setItem(STATE_KEY, JSON.stringify(nextState));
+        } catch {
+            /* no-op */
+        }
+        if (nextState.range) _activeRange = nextState.range;
+        return nextState;
     }
 
     function _t(key, fallback) {
@@ -500,6 +522,7 @@ const MetricsView = (() => {
     function _startServerPolling(root) {
         _stopServerPolling();
         _serverRefreshTimer = window.setInterval(() => {
+            if (!root || !root.closest('.view.active')) return;
             const serverId = _el(root, '[data-role="server-select"]')?.value;
             if (!serverId) return;
             _loadServerMetrics(root, serverId, { refreshOnly: true }).catch(() => {});
@@ -518,6 +541,11 @@ const MetricsView = (() => {
         if (!root) return;
         _stopServerPolling();
         _hideTooltip();
+
+        const savedState = _loadState();
+        if (savedState.range && RANGE_OPTIONS.some(item => item.key === savedState.range)) {
+            _activeRange = savedState.range;
+        }
 
         root.innerHTML = `
             <section class="panel metrics-shell metrics-shell--tight">
@@ -557,8 +585,24 @@ const MetricsView = (() => {
         _fillNodeSelect(nodeSelect);
         _fillServerSelect(serverSelect);
 
-        nodeSelect.addEventListener('change', () => _loadNodeMetrics(root, nodeSelect.value));
-        serverSelect.addEventListener('change', () => _loadServerMetrics(root, serverSelect.value));
+        const restoredNodeId = savedState.nodeId && _nodes.some(node => String(node.id) === String(savedState.nodeId))
+            ? String(savedState.nodeId)
+            : '';
+        const restoredServerId = savedState.serverId && _servers.some(server => String(server.id) === String(savedState.serverId))
+            ? String(savedState.serverId)
+            : '';
+
+        nodeSelect.value = restoredNodeId;
+        serverSelect.value = restoredServerId;
+
+        nodeSelect.addEventListener('change', () => {
+            _saveState({ nodeId: nodeSelect.value || '' });
+            _loadNodeMetrics(root, nodeSelect.value);
+        });
+        serverSelect.addEventListener('change', () => {
+            _saveState({ serverId: serverSelect.value || '' });
+            _loadServerMetrics(root, serverSelect.value);
+        });
 
         nodeScanBtn.addEventListener('click', async () => {
             const nodeId = nodeSelect.value;
@@ -599,10 +643,17 @@ const MetricsView = (() => {
                 const next = btn.dataset.range;
                 if (!next || next === _activeRange) return;
                 _activeRange = next;
+                _saveState({ range: _activeRange });
                 root.querySelectorAll('[data-range]').forEach(item => item.classList.toggle('is-active', item.dataset.range === _activeRange));
                 const serverId = serverSelect.value;
                 if (serverId) await _loadServerMetrics(root, serverId);
             });
+        });
+
+        _saveState({
+            range: _activeRange,
+            nodeId: nodeSelect.value || '',
+            serverId: serverSelect.value || ''
         });
 
         await _loadNodeMetrics(root, nodeSelect.value || '');
