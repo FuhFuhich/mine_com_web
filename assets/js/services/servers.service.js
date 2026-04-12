@@ -55,6 +55,12 @@ const ServersService = (() => {
         return Api.post(`/api/mc-servers/${id}/mods/share-link`);
     }
 
+    async function uploadModsArchive(id, file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        return Api.upload(`/api/mc-servers/${id}/archives?type=mods`, fd);
+    }
+
     return {
         getAll,
         getById,
@@ -69,6 +75,7 @@ const ServersService = (() => {
         redeploy,
         sendRcon,
         getRecentLogs,
-        createModsShareLink
+        createModsShareLink,
+        uploadModsArchive
     };
 })();

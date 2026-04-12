@@ -5,6 +5,7 @@ const ServersView = (() => {
     let _bundles = [];
     let _quickLogCache = new Map();
     let _usageCache = new Map();
+    let _availableNodes = [];
 
     /* ─── status ─── */
     const STATUS_CLASS = {
@@ -383,12 +384,98 @@ const ServersView = (() => {
         overlay.classList.add('active');
     }
 
+    function _populateNodeSelect(nodes, selectedId = '') {
+        const select = document.getElementById('f-node');
+        if (!select) return;
+
+        const currentValue = selectedId || select.value || '';
+        select.innerHTML = `<option value="">${I18n.t('modal.selectNode')}</option>` +
+            nodes.map(node => `<option value="${node.id}" ${String(node.id) === String(currentValue) ? 'selected' : ''}>${node.name} (${node.ipAddress})</option>`).join('');
+    }
+
+    async function _ensureNodeOptions(selectedId = '') {
+        try {
+            _availableNodes = await NodesService.getAll();
+            _populateNodeSelect(_availableNodes, selectedId);
+        } catch (err) {
+            _availableNodes = [];
+            _populateNodeSelect([], selectedId);
+            Toast.show(err.message || 'Не удалось загрузить список узлов', 'error');
+        }
+    }
+
+    function _resetModsArchiveField() {
+        const input = document.getElementById('f-modpack-file');
+        const name = document.getElementById('f-modpack-name');
+        const zone = document.getElementById('f-modpack-zone');
+        if (input) input.value = '';
+        if (name) name.textContent = '';
+        zone?.classList.remove('dragover');
+    }
+
+    function _formatFileSize(bytes) {
+        const value = Number(bytes);
+        if (!Number.isFinite(value) || value <= 0) return '';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let size = value;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    function _applyModsArchiveFile(file) {
+        if (!file) return false;
+
+        const fileName = String(file.name || '').toLowerCase();
+        if (!fileName.endsWith('.zip')) {
+            _resetModsArchiveField();
+            Toast.show('Нужно выбрать ZIP-файл, а не папку или отдельный .jar', 'error');
+            return false;
+        }
+
+        const input = document.getElementById('f-modpack-file');
+        const label = document.getElementById('f-modpack-name');
+        if (!input) return false;
+
+        try {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            input.files = dt.files;
+        } catch (err) {
+            console.warn('Не удалось присвоить dropped file в input.files', err);
+        }
+
+        if (label) {
+            const sizeText = _formatFileSize(file.size);
+            label.textContent = sizeText ? `${file.name} (${sizeText})` : file.name;
+            label.title = file.name;
+        }
+        return true;
+    }
+
+    function _isDirectoryDrop(item) {
+        try {
+            const entry = item?.webkitGetAsEntry?.();
+            return Boolean(entry && entry.isDirectory);
+        } catch (_) {
+            return false;
+        }
+    }
+
     /* ─── MC server creation modal ─── */
     async function _openCreateModal() {
         _editingId = null;
         document.getElementById('mc-modal-title').textContent = I18n.t('modal.createServer');
         document.getElementById('mc-modal-submit').textContent = I18n.t('modal.create');
         document.getElementById('mc-server-form').reset();
+        _resetModsArchiveField();
+        await _ensureNodeOptions();
+        if (!_availableNodes.length) {
+            Toast.show('Нет доступных узлов. Проверь список Nodes и права доступа.', 'error');
+        }
 
         const dockerRadio = document.querySelector('input[name="mc-deploy-target"][value="docker"]');
         if (dockerRadio) dockerRadio.checked = true;
@@ -402,8 +489,10 @@ const ServersView = (() => {
         const s = _servers.find(x => String(x.id) === String(id)) || await ServersService.getById(id);
         if (!s) return;
         _editingId = id;
+        _resetModsArchiveField();
         document.getElementById('mc-modal-title').textContent = I18n.t('modal.editServer');
         document.getElementById('mc-modal-submit').textContent = I18n.t('modal.save');
+        await _ensureNodeOptions(s.nodeId || '');
         await _loadCatalog((s.deployTarget || 'docker') === 'screen' ? 'baremetal' : (s.deployTarget || 'docker'));
 
         document.getElementById('f-name').value = s.name || '';
@@ -445,6 +534,7 @@ const ServersView = (() => {
 
     function _closeModal() {
         document.getElementById('mc-modal-overlay').classList.remove('active');
+        _resetModsArchiveField();
         _editingId = null;
     }
 
@@ -530,8 +620,14 @@ const ServersView = (() => {
         const nodeId = document.getElementById('f-node').value;
         const uiTarget = document.querySelector('input[name="mc-deploy-target"]:checked')?.value || 'docker';
         const target = uiTarget === 'baremetal' ? 'screen' : uiTarget;
+        const modsArchive = document.getElementById('f-modpack-file')?.files?.[0] || null;
 
-        if (!name || !nodeId) { Toast.show(I18n.t('auth.fillAll'), 'error'); return; }
+        if (!name) { Toast.show(I18n.t('auth.fillAll'), 'error'); return; }
+        if (!nodeId) { Toast.show('Сначала выбери узел для деплоя', 'error'); return; }
+        if (modsArchive && uiTarget !== 'docker') {
+            Toast.show('ZIP с mods поддерживается только для Docker-серверов', 'error');
+            return;
+        }
 
         const allocAll = document.getElementById('f-allocate-all').checked;
         const backupEn = document.getElementById('f-backup-enabled').checked;
@@ -576,15 +672,24 @@ const ServersView = (() => {
         }
 
         const btn = document.getElementById('mc-modal-submit');
+        const isEditing = Boolean(_editingId);
         btn.disabled = true;
         btn.textContent = '...';
         try {
-            if (_editingId) {
+            if (isEditing) {
                 await ServersService.update(_editingId, payload);
+                if (modsArchive) {
+                    await ServersService.uploadModsArchive(_editingId, modsArchive);
+                    Toast.show('mods.zip загружен. Примени redeploy, чтобы архив попал в контейнер', 'info');
+                }
                 Toast.show(`${name} saved`, 'success');
             } else {
                 const created = await ServersService.create(payload);
                 Toast.show(`${name} created`, 'success');
+                if (modsArchive) {
+                    await ServersService.uploadModsArchive(created.id, modsArchive);
+                    Toast.show('mods.zip загружен на хост', 'success');
+                }
                 try {
                     await ServersService.deploy(created.id);
                     Toast.show(`${name} deploy started`, 'info');
@@ -598,7 +703,7 @@ const ServersView = (() => {
             Toast.show(err.message, 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = _editingId ? I18n.t('modal.save') : I18n.t('modal.create');
+            btn.textContent = isEditing ? I18n.t('modal.save') : I18n.t('modal.create');
         }
     }
 
@@ -667,10 +772,48 @@ const ServersView = (() => {
         });
 
         const modpackInput = document.getElementById('f-modpack-file');
-        document.getElementById('f-modpack-zone')?.addEventListener('click', () => modpackInput?.click());
+        const modpackZone = document.getElementById('f-modpack-zone');
+
+        modpackZone?.addEventListener('click', () => modpackInput?.click());
+
         modpackInput?.addEventListener('change', e => {
-            const file = e.target.files[0];
-            if (file) document.getElementById('f-modpack-name').textContent = file.name;
+            const file = e.target.files?.[0];
+            if (file) {
+                _applyModsArchiveFile(file);
+                modpackZone?.classList.add('dragover');
+            } else {
+                _resetModsArchiveField();
+                modpackZone?.classList.remove('dragover');
+            }
+        });
+
+        modpackZone?.addEventListener('dragover', e => {
+            e.preventDefault();
+            modpackZone.classList.add('dragover');
+        });
+
+        modpackZone?.addEventListener('dragleave', () => {
+            modpackZone.classList.remove('dragover');
+        });
+
+        modpackZone?.addEventListener('drop', e => {
+            e.preventDefault();
+            modpackZone.classList.remove('dragover');
+
+            const firstItem = e.dataTransfer?.items?.[0];
+            if (_isDirectoryDrop(firstItem)) {
+                Toast.show('Сюда нужно перетаскивать ZIP-файл, а не папку. Сначала заархивируй mods в mods.zip', 'error');
+                _resetModsArchiveField();
+                return;
+            }
+
+            const file = e.dataTransfer?.files?.[0];
+            if (!file) {
+                _resetModsArchiveField();
+                return;
+            }
+
+            _applyModsArchiveFile(file);
         });
     }
 

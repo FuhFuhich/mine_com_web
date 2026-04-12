@@ -35,6 +35,12 @@ const FilesService = (() => {
         return saveContent(mcServerId, path, content);
     }
 
+    async function uploadModpack(mcServerId, file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        return Api.upload(`/api/mc-servers/${mcServerId}/archives?type=mods`, fd);
+    }
+
     return {
         getTree,
         getContent,
@@ -43,6 +49,7 @@ const FilesService = (() => {
         remove,
         getConfigs,
         getConfigContent,
-        saveConfigContent
+        saveConfigContent,
+        uploadModpack
     };
 })();
