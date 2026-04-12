@@ -52,8 +52,23 @@
         <div class="form-group">
           <label data-i18n="auth.password">Password</label>
           <div class="input-eye-wrap">
-            <input id="l-password" type="password" placeholder="••••••••" autocomplete="current-password" />
-            <button class="eye-btn" type="button" data-target="l-password" style="opacity:0.45">👁</button>
+            <input id="l-password" class="password-input" type="password" placeholder="••••••••" autocomplete="current-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" />
+            <button class="eye-btn" type="button" data-target="l-password" aria-label="Показать пароль" title="Показать пароль">
+              <span class="eye-icon eye-open" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 12C3.9 8.4 7.6 6 12 6C16.4 6 20.1 8.4 22 12C20.1 15.6 16.4 18 12 18C7.6 18 3.9 15.6 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
+              <span class="eye-icon eye-off" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.6 6.2C11.05 6.07 11.52 6 12 6C16.4 6 20.1 8.4 22 12C21.25 13.42 20.24 14.66 19.04 15.68" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.21 8.21C4.55 9.18 3.13 10.45 2 12C3.9 15.6 7.6 18 12 18C13.73 18 15.36 17.63 16.82 16.97" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.88 9.88C9.37 10.39 9.05 11.1 9.05 11.88C9.05 13.45 10.33 14.72 11.9 14.72C12.68 14.72 13.39 14.41 13.9 13.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
           </div>
         </div>
         <div class="auth-row">
@@ -100,8 +115,23 @@
         <div class="form-group">
           <label data-i18n="auth.password">Password</label>
           <div class="input-eye-wrap">
-            <input id="r-password" type="password" placeholder="••••••••" />
-            <button class="eye-btn" type="button" data-target="r-password" style="opacity:0.45">👁</button>
+            <input id="r-password" class="password-input" type="password" placeholder="••••••••" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" />
+            <button class="eye-btn" type="button" data-target="r-password" aria-label="Показать пароль" title="Показать пароль">
+              <span class="eye-icon eye-open" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 12C3.9 8.4 7.6 6 12 6C16.4 6 20.1 8.4 22 12C20.1 15.6 16.4 18 12 18C7.6 18 3.9 15.6 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
+              <span class="eye-icon eye-off" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.6 6.2C11.05 6.07 11.52 6 12 6C16.4 6 20.1 8.4 22 12C21.25 13.42 20.24 14.66 19.04 15.68" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.21 8.21C4.55 9.18 3.13 10.45 2 12C3.9 15.6 7.6 18 12 18C13.73 18 15.36 17.63 16.82 16.97" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.88 9.88C9.37 10.39 9.05 11.1 9.05 11.88C9.05 13.45 10.33 14.72 11.9 14.72C12.68 14.72 13.39 14.41 13.9 13.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
           </div>
           <div class="password-strength" id="pwd-strength">
             <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
@@ -111,8 +141,23 @@
         <div class="form-group">
           <label data-i18n="auth.confirmPassword">Confirm password</label>
           <div class="input-eye-wrap">
-            <input id="r-password2" type="password" placeholder="••••••••" />
-            <button class="eye-btn" type="button" data-target="r-password2" style="opacity:0.45">👁</button>
+            <input id="r-password2" class="password-input" type="password" placeholder="••••••••" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" />
+            <button class="eye-btn" type="button" data-target="r-password2" aria-label="Показать пароль" title="Показать пароль">
+              <span class="eye-icon eye-open" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 12C3.9 8.4 7.6 6 12 6C16.4 6 20.1 8.4 22 12C20.1 15.6 16.4 18 12 18C7.6 18 3.9 15.6 2 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </span>
+              <span class="eye-icon eye-off" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 3L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M10.6 6.2C11.05 6.07 11.52 6 12 6C16.4 6 20.1 8.4 22 12C21.25 13.42 20.24 14.66 19.04 15.68" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6.21 8.21C4.55 9.18 3.13 10.45 2 12C3.9 15.6 7.6 18 12 18C13.73 18 15.36 17.63 16.82 16.97" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.88 9.88C9.37 10.39 9.05 11.1 9.05 11.88C9.05 13.45 10.33 14.72 11.9 14.72C12.68 14.72 13.39 14.41 13.9 13.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </button>
           </div>
         </div>
 

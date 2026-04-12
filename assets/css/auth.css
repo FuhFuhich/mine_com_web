@@ -122,15 +122,9 @@ body[data-theme="light"] .phone-wrap select option {
 
 .phone-wrap input { flex: 1; }
 
-/* Eye button */
+/* Native password reveal */
 .input-eye-wrap { position: relative; }
-.input-eye-wrap input { width: 100%; box-sizing: border-box; padding-right: 36px; }
-.eye-btn {
-  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-  background: transparent; border: none; cursor: pointer;
-  font-size: 14px; opacity: 0.5; padding: 0; line-height: 1;
-}
-.eye-btn:hover { opacity: 1; }
+.input-eye-wrap input { width: 100%; box-sizing: border-box; padding-right: 42px; }
 
 /* Password strength */
 .password-strength { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
